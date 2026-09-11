@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AuthLayout from './pages/auth/authLayout.tsx';
 import Login from './pages/auth/login/Login.tsx';
 import Register from './pages/auth/register/Register.tsx';
+import VerifyMail from './pages/auth/verifyEmail/verifyMail.tsx';
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
+      { path: '/verify-email', element: <VerifyMail /> },
     ],
   },
 ]);
