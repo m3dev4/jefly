@@ -7,6 +7,8 @@ import AuthLayout from './pages/auth/authLayout.tsx';
 import Login from './pages/auth/login/Login.tsx';
 import Register from './pages/auth/register/Register.tsx';
 import VerifyMail from './pages/auth/verifyEmail/verifyMail.tsx';
+import PasswordRecovery from './pages/auth/passwordRecovery/passwordRecovery.tsx';
+import NewPassword from './pages/auth/newPassword/newPassword.tsx';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +22,8 @@ const router = createBrowserRouter([
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
       { path: '/verify-email', element: <VerifyMail /> },
+      { path: '/password-recovery', element: <PasswordRecovery /> },
+      { path: '/new-password', element: <NewPassword /> },
     ],
   },
 ]);
