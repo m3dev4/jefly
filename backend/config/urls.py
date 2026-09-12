@@ -11,14 +11,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-
-def trigger_error(request):
-    division_by_zero = 1 / 0
-
-
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("sentry-debug/", trigger_error),
     # Auth JWT
     path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
