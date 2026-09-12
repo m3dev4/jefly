@@ -1,9 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-
-# Create your models here.
-
-
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -38,8 +34,8 @@ class User(AbstractUser):
     )
     onboarding_completed = models.BooleanField(default=False)
     googleId = models.CharField(max_length=255, blank=True, null=True)
-    
-    USERNAME_FIELD = 'email'
+
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
     objects = UserManager()
 
