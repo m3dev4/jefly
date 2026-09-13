@@ -1,13 +1,18 @@
 """
 Couche de sérialisation du module d'authentification.
 
-Ce module regroupe les sérialiseurs des quatre flux d'authentification :
+Ce module regroupe les sérialiseurs des flux d'authentification et de gestion
+de profil :
 
 - inscription : :class:`RegisterSerializer` ;
 - connexion : :class:`LoginSerializer` ;
 - vérification d'adresse email par code : :class:`VerifyEmailSerializer` ;
 - réinitialisation de mot de passe : :class:`PasswordResetRequestSerializer`
-  et :class:`PasswordResetConfirmSerializer`.
+  et :class:`PasswordResetConfirmSerializer` ;
+- gestion de session : :class:`SessionSerializer` ;
+- lecture du profil : :class:`ProfileSerializer` ;
+- mise à jour du profil : :class:`UpdateProfileSerializer` ;
+- suppression du compte : :class:`DeleteProfileSerializer`.
 
 Chaque sérialiseur valide strictement ses entrées et produit des messages
 d'erreur en français, clairs et rattachés au champ concerné, sans jamais
@@ -556,3 +561,214 @@ class SessionSerializer(serializers.ModelSerializer):
 
         # Créer la nouvelle session
         return session.objects.create(**validated_data)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur de lecture du profil utilisateur.
+
+    Expose les informations publiques du profil en lecture seule.
+    Ne contient aucune logique de validation ou de modification.
+
+    Champs exposés :
+        - ``id`` : identifiant unique de l'utilisateur ;
+        - ``email`` : adresse email du compte ;
+        - ``first_name`` : prénom ;
+        - ``last_name`` : nom de famille ;
+        - ``number_phone`` : numéro de téléphone ;
+        - ``date_joined`` : date de création du compte ;
+        - ``onboarding_completed`` : indique si l'onboarding est terminé ;
+        - ``profile_picture`` : photo de profil (URL si présente).
+
+    Champs exclus (sensibles) :
+        - ``password``, ``is_staff``, ``is_superuser``, ``is_active``,
+          ``googleId``, tokens, sessions.
+    """
+
+    profile_picture = serializers.ImageField(read_only=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "number_phone",
+            "date_joined",
+            "onboarding_completed",
+            "profile_picture",
+        ]
+        read_only_fields = fields
+
+
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur de mise à jour du profil utilisateur.
+
+    Permet la mise à jour partielle ou complète des champs modifiables
+    du profil par l'utilisateur lui-même.
+
+    Champs modifiables :
+        - ``first_name`` : prénom (max 30 caractères) ;
+        - ``last_name`` : nom de famille (max 30 caractères) ;
+        - ``number_phone`` : numéro de téléphone (max 15 caractères) ;
+        - ``profile_picture`` : photo de profil (upload image).
+
+    Champs non modifiables via ce serializer :
+        - ``email`` : traité séparément via un flux dédié (vérification) ;
+        - ``password`` : traité via le flux de réinitialisation ;
+        - ``date_joined``, ``onboarding_completed`` : gérés automatiquement.
+
+    La méthode ``update()`` applique les modifications via ``instance.save()``
+    sans jamais toucher au mot de passe.
+    """
+
+    first_name = serializers.CharField(
+        max_length=30,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            "max_length": "Le prénom ne peut pas dépasser 30 caractères.",
+            "blank": "Le prénom ne peut pas être vide.",
+        },
+    )
+    last_name = serializers.CharField(
+        max_length=30,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            "max_length": "Le nom ne peut pas dépasser 30 caractères.",
+            "blank": "Le nom ne peut pas être vide.",
+        },
+    )
+    number_phone = serializers.CharField(
+        max_length=15,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            "max_length": "Le numéro de téléphone ne peut pas dépasser 15 caractères.",
+        },
+    )
+    profile_picture = serializers.ImageField(
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "number_phone",
+            "profile_picture",
+        ]
+
+    def validate_first_name(self, value: str) -> str:
+        """
+        Valide le prénom : pas de caractères de contrôle, pas seulement des espaces.
+        """
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise serializers.ValidationError("Le prénom ne peut pas être vide.")
+            # Interdire les caractères de contrôle
+            if any(ord(c) < 32 for c in value):
+                raise serializers.ValidationError(
+                    "Le prénom contient des caractères invalides."
+                )
+        return value
+
+    def validate_last_name(self, value: str) -> str:
+        """
+        Valide le nom : pas de caractères de contrôle, pas seulement des espaces.
+        """
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise serializers.ValidationError("Le nom ne peut pas être vide.")
+            if any(ord(c) < 32 for c in value):
+                raise serializers.ValidationError(
+                    "Le nom contient des caractères invalides."
+                )
+        return value
+
+    def validate_number_phone(self, value: str) -> str:
+        """
+        Valide le numéro de téléphone : format basique (chiffres, espaces, +, -, .).
+        """
+        if value is not None:
+            value = value.strip()
+            if value and not re.match(r"^[\d\s\+\-\.]+$", value):
+                raise serializers.ValidationError(
+                    "Le numéro de téléphone ne peut contenir que des chiffres, "
+                    "des espaces, +, - ou ."
+                )
+        return value
+
+    def update(self, instance: User, validated_data: dict[str, Any]) -> User:
+        """
+        Met à jour l'instance utilisateur avec les données validées.
+
+        Ne touche jamais au mot de passe ni à l'email.
+        """
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save(update_fields=list(validated_data.keys()))
+        return instance
+
+
+class DeleteProfileSerializer(serializers.Serializer):
+    """
+    Sérialiseur de validation de la demande de suppression de compte.
+
+    Exige la confirmation du mot de passe actuel pour éviter les suppressions
+    accidentelles. La vérification réelle du mot de passe (comparaison au hash)
+    est déléguée à la vue pour séparer la validation de format de la logique
+    d'authentification.
+
+    Champs :
+        - ``password`` : mot de passe actuel (requis, écriture seule) ;
+        - ``confirm_deletion`` : confirmation explicite (requis, booléen ou
+          chaîne "DELETE" selon l'UX souhaitée).
+
+    Note : la suppression effective (``user.delete()``) est réalisée côté vue
+    après validation réussie de ce serializer.
+    """
+
+    password = serializers.CharField(
+        required=True,
+        write_only=True,
+        error_messages={
+            "required": "Le mot de passe est obligatoire pour confirmer la suppression.",
+            "blank": "Le mot de passe ne peut pas être vide.",
+        },
+    )
+    confirm_deletion = serializers.ChoiceField(
+        choices=[True, "DELETE"],
+        required=True,
+        error_messages={
+            "required": "La confirmation de suppression est obligatoire.",
+            "invalid_choice": "Veuillez confirmer la suppression en cochant la case ou en saisissant 'DELETE'.",
+        },
+    )
+
+    def validate_password(self, value: str) -> str:
+        """
+        Validation de format basique du mot de passe.
+        La vérification réelle (correspondance au hash) se fait côté vue.
+        """
+        if not value or not value.strip():
+            raise serializers.ValidationError("Le mot de passe ne peut pas être vide.")
+        return value.strip()
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validation croisée : s'assurer que la confirmation est explicite.
+        """
+        confirm = attrs.get("confirm_deletion")
+        if confirm is True or confirm == "DELETE":
+            return attrs
+        raise serializers.ValidationError(
+            {"confirm_deletion": "Confirmation de suppression invalide."}
+        )

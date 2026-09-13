@@ -25,6 +25,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .email_service import send_otp_email, send_password_reset_email
@@ -36,6 +38,9 @@ from .serializers import (
     RegisterSerializer,
     SessionSerializer,
     VerifyEmailSerializer,
+    ProfileSerializer,
+    UpdateProfileSerializer,
+    DeleteProfileSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -240,9 +245,9 @@ class AuthViewSet(viewsets.ViewSet):
         from django.conf import settings
         from datetime import timedelta
 
-        refresh_lifetime = getattr(
-            settings, "SIMPLE_JWT", {}
-        ).get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
+        refresh_lifetime = getattr(settings, "SIMPLE_JWT", {}).get(
+            "REFRESH_TOKEN_LIFETIME", timedelta(days=7)
+        )
         token_expiration = timezone.now() + refresh_lifetime
 
         # Extraire device et location depuis la requête
@@ -259,8 +264,7 @@ class AuthViewSet(viewsets.ViewSet):
 
         # Créer le serializer avec l'utilisateur dans le contexte
         session_serializer = SessionSerializer(
-            data=session_data, 
-            context={"request": request}
+            data=session_data, context={"request": request}
         )
         session_serializer.is_valid(raise_exception=True)
         # Forcer l'utilisateur sur l'instance avant de sauvegarder
@@ -429,3 +433,212 @@ class AuthViewSet(viewsets.ViewSet):
         serializer = SessionSerializer(active_sessions, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProfileViewSet(viewsets.ViewSet):
+    """
+    ViewSet de gestion du profil utilisateur authentifié.
+
+    Toutes les actions sont protégées par IsAuthenticated.
+    Ce ViewSet opère uniquement sur l'utilisateur connecté (request.user),
+    sans nécessiter de pk dans l'URL.
+
+    Actions :
+        - retrieve (GET) : lecture du profil complet
+        - update (PUT/PATCH) : mise à jour partielle ou complète du profil
+        - destroy (DELETE) : suppression du compte (avec confirmation mot de passe)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        """
+        Retourne l'utilisateur connecté.
+        Permet d'utiliser ce ViewSet sans pk dans l'URL.
+        """
+        return self.request.user
+
+    def retrieve(self, request, pk=None):
+        """
+        Lecture du profil de l'utilisateur connecté.
+
+        GET /api/profile/
+
+        Réponses :
+            - 200 : Données du profil sérialisées
+            - 401 : Non authentifié
+        """
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update(self, request, pk=None, partial=True):
+        """
+        Mise à jour du profil de l'utilisateur connecté.
+
+        PUT/PATCH /api/profile/
+
+        Payload attendu (tous les champs optionnels) :
+            {
+                "first_name": "Jean",
+                "last_name": "Dupont",
+                "number_phone": "+33 6 12 34 56 78",
+                "profile_picture": <fichier image>
+            }
+
+        Réponses :
+            - 200 : Profil mis à jour, données retournées
+            - 400 : Erreurs de validation
+            - 401 : Non authentifié
+        """
+        serializer = UpdateProfileSerializer(
+            request.user, data=request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Retourner le profil complet mis à jour
+        profile_serializer = ProfileSerializer(request.user)
+        return Response(profile_serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        """
+        Mise à jour partielle du profil (alias pour PATCH).
+
+        PATCH /api/profile/
+        """
+        return self.update(request, partial=True)
+
+    def destroy(self, request, pk=None):
+        """
+        Suppression du compte de l'utilisateur connecté.
+
+        DELETE /api/profile/
+
+        Payload attendu :
+            {
+                "password": "MotDePasseActuel123!",
+                "confirm_deletion": true
+            }
+            ou
+            {
+                "password": "MotDePasseActuel123!",
+                "confirm_deletion": "DELETE"
+            }
+
+        Réponses :
+            - 204 : Compte supprimé avec succès
+            - 400 : Mot de passe incorrect ou confirmation invalide
+            - 401 : Non authentifié
+        """
+        serializer = DeleteProfileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Vérifier que le mot de passe correspond
+        if not request.user.check_password(serializer.validated_data["password"]):
+            return Response(
+                {"password": ["Mot de passe incorrect."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Supprimer le compte
+        request.user.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserProfileView(APIView):
+    """
+    Vue dédiée à la gestion de la photo de profil via Cloudinary.
+
+    Actions :
+        - POST : upload d'une nouvelle photo de profil
+        - DELETE : suppression de la photo de profil actuelle
+
+    Protégée par IsAuthenticated.
+    """
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        """
+        Upload d'une photo de profil.
+
+        POST /api/profile/photo/
+
+        Payload : multipart/form-data avec champ 'photo' (fichier image)
+
+        Réponses :
+            - 200 : Photo uploadée, retourne l'URL Cloudinary
+            - 400 : Fichier invalide (type, taille, etc.)
+            - 401 : Non authentifié
+            - 500 : Erreur serveur (Cloudinary)
+        """
+        from .utils import (
+            validate_image_file,
+            upload_profile_image,
+            CloudinaryError,
+            InvalidImageError,
+        )
+
+        photo_file = request.FILES.get("photo")
+        if not photo_file:
+            return Response(
+                {"photo": ["Aucun fichier image fourni."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Valider le fichier
+        try:
+            validate_image_file(photo_file)
+        except InvalidImageError as e:
+            return Response(
+                {"photo": [str(e)]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Upload vers Cloudinary
+        try:
+            image_url = upload_profile_image(photo_file, request.user.id)
+        except CloudinaryError as e:
+            return Response(
+                {"photo": [str(e)]},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Mettre à jour l'utilisateur avec la nouvelle URL
+        request.user.profile_picture = image_url
+        request.user.save(update_fields=["profile_picture"])
+
+        return Response(
+            {"profile_picture": image_url, "message": "Photo de profil mise à jour."},
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request):
+        """
+        Suppression de la photo de profil actuelle.
+
+        DELETE /api/profile/photo/
+
+        Réponses :
+            - 204 : Photo supprimée (ou aucune photo à supprimer)
+            - 401 : Non authentifié
+        """
+        from .utils import delete_profile_image, extract_public_id_from_url
+
+        current_url = request.user.profile_picture
+        if not current_url:
+            # Pas de photo à supprimer
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # Extraire le public_id depuis l'URL
+        public_id = extract_public_id_from_url(current_url)
+        if public_id:
+            delete_profile_image(public_id)
+
+        # Mettre à jour l'utilisateur
+        request.user.profile_picture = None
+        request.user.save(update_fields=["profile_picture"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
