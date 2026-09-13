@@ -24,7 +24,7 @@ from django.utils import timezone
 from django.utils.encoding import force_str
 from rest_framework import serializers
 
-from .models import User, optCode
+from .models import User, optCode, session
 
 # Longueur minimale imposée aux mots de passe (inscription et réinitialisation).
 LONGUEUR_MIN_MOT_DE_PASSE: Final[int] = 8
@@ -423,3 +423,136 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 {"confirmPassword": ["Les mots de passe ne correspondent pas."]}
             )
         return attrs
+
+
+class SessionSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur de création de session utilisateur.
+
+    Ce sérialiseur est exclusivement utilisé au moment de la connexion (login)
+    pour persister une session liée au token JWT généré. Il n'est pas destiné
+    à être appelé directement par un client avec un payload utilisateur : les
+    champs `token`, `token_expiration`, `device`, `location` sont calculés
+    côté vue et injectés via le contexte ou les données validées.
+
+    Champs :
+        - ``user`` : lecture seule, déduit de ``request.user`` (contexte) ou
+          fourni explicitement via le contexte (clé ``user``) lors du login.
+        - ``token`` : écriture seule, token JWT généré côté vue.
+        - ``location`` : optionnel, dérivé de l'IP côté vue.
+        - ``device`` : optionnel, dérivé du user-agent côté vue.
+        - ``is_active`` : lecture seule, forcé à ``True`` à la création.
+        - ``date_created`` / ``date_last_used`` : lecture seule, auto-gérés.
+        - ``token_expiration`` : écriture seule, calculée depuis la durée de vie
+          du token JWT (doit être une date future).
+
+    Contrainte métier : un utilisateur ne peut avoir plus de
+    ``MAX_ACTIVE_SESSIONS`` (défaut: 5) sessions actives simultanément.
+    Si la limite est atteinte, la session la plus ancienne (selon
+    ``date_last_used``) est désactivée (LRU) avant de créer la nouvelle.
+    """
+
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    token = serializers.CharField(write_only=True)
+    location = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=255,
+        error_messages={
+            "max_length": "La localisation ne peut pas dépasser 255 caractères."
+        },
+    )
+    device = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=255,
+        error_messages={
+            "max_length": "L'identifiant de l'appareil ne peut pas dépasser 255 caractères."
+        },
+    )
+    is_active = serializers.BooleanField(read_only=True, default=True)
+    date_created = serializers.DateTimeField(read_only=True)
+    date_last_used = serializers.DateTimeField(read_only=True)
+    token_expiration = serializers.DateTimeField(write_only=True)
+
+    class Meta:
+        model = session
+        fields = [
+            "user",
+            "token",
+            "location",
+            "device",
+            "is_active",
+            "date_created",
+            "date_last_used",
+            "token_expiration",
+        ]
+        read_only_fields = ["user", "is_active", "date_created", "date_last_used"]
+
+    def validate_token_expiration(self, value):
+        """
+        Vérifie que la date d'expiration du token est dans le futur.
+        """
+        if value <= timezone.now():
+            raise serializers.ValidationError(
+                "La date d'expiration du token doit être dans le futur."
+            )
+        return value
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validation globale : token et token_expiration sont indissociables.
+        """
+        token = attrs.get("token")
+        token_expiration = attrs.get("token_expiration")
+
+        if not token:
+            raise serializers.ValidationError(
+                {"token": "Le token JWT est requis pour créer une session."}
+            )
+        if not token_expiration:
+            raise serializers.ValidationError(
+                {"token_expiration": "La date d'expiration du token est requise."}
+            )
+
+        return attrs
+
+    def create(self, validated_data: dict[str, Any], user=None) -> session:
+        """
+        Crée une nouvelle session en appliquant la politique LRU sur les sessions actives.
+
+        Logique d'éviction (LRU - Least Recently Used) :
+        1. Récupère les sessions actives (``is_active=True``) de l'utilisateur.
+        2. Si le nombre atteint ``MAX_ACTIVE_SESSIONS``, désactive la session
+           la plus ancienne selon ``date_last_used`` (basculement ``is_active=False``,
+           suppression logique, l'enregistrement reste en base).
+        3. Crée la nouvelle session avec ``is_active=True`` et les champs fournis.
+
+        Cette approche garantit qu'un utilisateur ne peut pas accumuler
+        indéfiniment de sessions actives, tout en conservant l'historique.
+
+        Args:
+            validated_data: Données validées du serializer.
+            user: Utilisateur pour lequel créer la session (passé via save(user=...)
+                  lors du login, car CurrentUserDefault renvoie AnonymousUser).
+        """
+        from django.conf import settings
+
+        # Utiliser l'utilisateur passé en paramètre ou celui des validated_data
+        user = user or validated_data.get("user")
+        max_sessions = getattr(settings, "MAX_ACTIVE_SESSIONS", 5)
+
+        # Récupérer les sessions actives de l'utilisateur, ordonnées par date_last_used (plus ancienne d'abord)
+        active_sessions = session.objects.filter(user=user, is_active=True).order_by(
+            "date_last_used"
+        )
+
+        # Si la limite est atteinte, désactiver la plus ancienne (LRU)
+        if active_sessions.count() >= max_sessions:
+            oldest_session = active_sessions.first()
+            if oldest_session:
+                oldest_session.is_active = False
+                oldest_session.save(update_fields=["is_active"])
+
+        # Créer la nouvelle session
+        return session.objects.create(**validated_data)

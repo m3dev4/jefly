@@ -23,17 +23,18 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .email_service import send_otp_email, send_password_reset_email
-from .models import User, optCode
+from .models import User, optCode, session
 from .serializers import (
     LoginSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
+    SessionSerializer,
     VerifyEmailSerializer,
 )
 
@@ -42,17 +43,17 @@ logger = logging.getLogger(__name__)
 
 class AuthViewSet(viewsets.ViewSet):
     """
-    ViewSet d'authentification gérant les flux pré-connexion.
+    ViewSet d'authentification gérant les flux pré-connexion et la gestion des sessions.
 
-    Toutes les actions sont publiques (AllowAny) car elles interviennent
-    avant ou sans authentification préalable.
-
-    Actions :
+    Actions publiques (AllowAny) :
         - register (POST) : inscription + envoi OTP
         - verify-email (POST) : vérification OTP + activation compte
-        - login (POST) : authentification + tokens JWT
+        - login (POST) : authentification + tokens JWT + création session
         - password-reset (POST) : demande réinitialisation + envoi lien
         - new-password (POST) : confirmation réinitialisation + mise à jour mot de passe
+
+    Actions protégées (IsAuthenticated) :
+        - get-all-sessions (GET) : liste des sessions actives de l'utilisateur
     """
 
     permission_classes = [AllowAny]
@@ -210,7 +211,7 @@ class AuthViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"], url_path="login")
     def login(self, request):
         """
-        Authentification email + mot de passe.
+        Authentification email + mot de passe + création de session.
 
         POST /api/auth/login/
 
@@ -221,7 +222,7 @@ class AuthViewSet(viewsets.ViewSet):
             }
 
         Réponses :
-            - 200 : Authentification réussie, tokens JWT retournés
+            - 200 : Authentification réussie, tokens JWT retournés, session créée
             - 401 : Identifiants invalides ou compte non activé
         """
         serializer = LoginSerializer(data=request.data)
@@ -233,6 +234,38 @@ class AuthViewSet(viewsets.ViewSet):
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
+
+        # Créer une session liée au token JWT
+        # Calculer l'expiration du token à partir de la durée de vie du refresh token
+        from django.conf import settings
+        from datetime import timedelta
+
+        refresh_lifetime = getattr(
+            settings, "SIMPLE_JWT", {}
+        ).get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
+        token_expiration = timezone.now() + refresh_lifetime
+
+        # Extraire device et location depuis la requête
+        device = request.META.get("HTTP_USER_AGENT", "")[:255]
+        # Location peut être dérivée de l'IP (simplifié ici)
+        location = request.META.get("REMOTE_ADDR", "")
+
+        session_data = {
+            "token": refresh_token,  # On stocke le refresh token comme identifiant de session
+            "device": device,
+            "location": location,
+            "token_expiration": token_expiration,
+        }
+
+        # Créer le serializer avec l'utilisateur dans le contexte
+        session_serializer = SessionSerializer(
+            data=session_data, 
+            context={"request": request}
+        )
+        session_serializer.is_valid(raise_exception=True)
+        # Forcer l'utilisateur sur l'instance avant de sauvegarder
+        # (CurrentUserDefault renvoie AnonymousUser pendant le login)
+        session_serializer.save(user=user)
 
         return Response(
             {
@@ -370,3 +403,29 @@ class AuthViewSet(viewsets.ViewSet):
             {"message": "Mot de passe réinitialisé avec succès."},
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="get-all-sessions",
+        permission_classes=[IsAuthenticated],
+    )
+    def get_all_sessions(self, request):
+        """
+        Liste des sessions actives de l'utilisateur connecté.
+
+        GET /api/auth/get-all-sessions/
+
+        Réponses :
+            - 200 : Liste des sessions actives (peut être vide)
+            - 401 : Non authentifié
+        """
+        # Récupérer les sessions actives de l'utilisateur, triées par date_last_used décroissant
+        active_sessions = session.objects.filter(
+            user=request.user, is_active=True
+        ).order_by("-date_last_used")
+
+        # Sérialiser sans exposer le token (write_only=True dans le serializer)
+        serializer = SessionSerializer(active_sessions, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -189,3 +189,6 @@ MAILERS = {
 }
 
 AUTH_USER_MODEL = "User.User"
+
+# Session management
+MAX_ACTIVE_SESSIONS = config("MAX_ACTIVE_SESSIONS", default=5, cast=int)
