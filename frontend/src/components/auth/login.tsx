@@ -1,15 +1,26 @@
-import React from 'react';
+import { useForm } from 'react-hook-form';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
-import { Lock, Mail, TextSearch } from 'lucide-react';
+import { Loader2, Lock, Mail, TextSearch } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Google } from '../../assets/icons';
 import { Link } from 'react-router-dom';
+import type { Login } from '../../interfaces/authInterface';
+import { useLogin } from '../../hooks/useAuth';
 
 const LoginComponent = () => {
+  const loginMutation = useLogin();
+  const { register, handleSubmit } = useForm<Login>({
+    defaultValues: { email: '', password: '' },
+  });
+
   return (
     <div className="flex flex-col items-start justify-start w-full h-full mt-5">
-      <form noValidate className="space-y-3 w-full">
+      <form
+        noValidate
+        className="space-y-3 w-full"
+        onSubmit={handleSubmit((data) => loginMutation.mutate(data))}
+      >
         <div className="flex flex-col space-y-1">
           <Label
             htmlFor="email"
@@ -19,9 +30,11 @@ const LoginComponent = () => {
           </Label>
           <div className="relative">
             <Input
+              id="email"
               className="w-full bg-gray-200 py-3.5 rounded-sm px-8"
               placeholder="exemple@test.com"
               type="email"
+              {...register('email', { required: "L'email est obligatoire." })}
             />
             <Mail
               size={14}
@@ -38,9 +51,13 @@ const LoginComponent = () => {
           </Label>
           <div className="relative">
             <Input
+              id="password"
               className="w-full bg-gray-200 py-3.5 rounded-sm px-8"
               placeholder="*****************"
               type="password"
+              {...register('password', {
+                required: 'Le mot de passe est obligatoire.',
+              })}
             />
             <Lock
               size={14}
@@ -54,8 +71,16 @@ const LoginComponent = () => {
           </a>
         </div>
         <div className="mt-2">
-          <Button className="w-full bg-secondary-jefly text-text-jefly p-5">
-            Se connecter
+          <Button
+            type="submit"
+            disabled={loginMutation.isPending}
+            className="w-full bg-secondary-jefly text-text-jefly p-5"
+          >
+            {loginMutation.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              'Se connecter'
+            )}
           </Button>
         </div>
         <div className="mt-3">
@@ -80,7 +105,7 @@ const LoginComponent = () => {
         </div>
         <div className="mt-3 flex items-center justify-center">
           <p className="text-sm text-text-jefly font-sans">
-            Vous n'avez pas de compte ? {' '}
+            Vous n'avez pas de compte ?{' '}
             <Link to="/register" className="text-primary-jefly hover:underline">
               S'inscrire
             </Link>

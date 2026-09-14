@@ -1,7 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { LogoJefly } from '../../assets/images';
 import { NAV_LINKS } from '../../constants/utils';
 
 export default function Header() {
+  const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-50 bg-[#F7F7F5]/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -29,21 +31,16 @@ export default function Header() {
           <button
             type="button"
             className="rounded-lg border border-black/10 px-5 py-2.5 font-sans text-sm font-medium text-[#1E1E24] transition hover:bg-black/5"
+            onClick={() => navigate('/login')}
           >
             Se connecter
           </button>
           <button
             type="button"
             className="rounded-lg bg-[#F2994A] px-5 py-2.5 font-sans text-sm font-semibold text-[#1E1E24] transition hover:bg-[#e28a3a]"
+            onClick={() => navigate('/register')}
           >
             S'inscrire
-          </button>
-          <button
-            type="button"
-            aria-label="Changer de langue"
-            className="hidden h-8 w-8 items-center justify-center rounded-full font-sans text-sm lg:flex"
-          >
-            🌐
           </button>
         </div>
       </div>
