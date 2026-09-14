@@ -24,6 +24,7 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/", include("User.urls")),  # Inclut les routes de l'application User
+    path("api/", include("Service.urls")),  # Inclut les routes de l'application Service
 ]
 
 if settings.DEBUG:
