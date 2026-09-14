@@ -36,11 +36,7 @@ class User(AbstractUser):
     )
     onboarding_completed = models.BooleanField(default=False)
     googleId = models.CharField(max_length=255, blank=True, null=True)
-    technologies = models.ManyToManyField(
-        "Technologie.Technologie",
-        blank=True,
-        related_name="users",
-    )
+    service = models.ForeignKey("Service.Service", related_name="users", on_delete=models.SET_NULL, null=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
