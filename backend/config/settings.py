@@ -62,7 +62,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # apps
     "User",
-    "Service"
+    "Service",
+    "Technologie",
 ]
 
 MIDDLEWARE = [
@@ -193,3 +194,15 @@ AUTH_USER_MODEL = "User.User"
 
 # Session management
 MAX_ACTIVE_SESSIONS = config("MAX_ACTIVE_SESSIONS", default=5, cast=int)
+
+# Cloudinary : noms normalisés, avec compatibilité avec les anciennes clés du .env.
+CLOUDINARY_CLOUD_NAME = config(
+    "CLOUDINARY_CLOUD_NAME", default=config("CLOUDINARY_NAME", default="")
+)
+CLOUDINARY_API_KEY = config(
+    "CLOUDINARY_API_KEY", default=config("CLOUDINARY_API_Key", default="")
+)
+CLOUDINARY_API_SECRET = config(
+    "CLOUDINARY_API_SECRET",
+    default=config("CLOUDINARY_API_Key_SECRET", default=""),
+)

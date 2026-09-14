@@ -25,6 +25,7 @@ urlpatterns = [
     ),
     path("api/", include("User.urls")),  # Inclut les routes de l'application User
     path("api/", include("Service.urls")),  # Inclut les routes de l'application Service
+    path("api/", include("Technologie.urls")),
 ]
 
 if settings.DEBUG:

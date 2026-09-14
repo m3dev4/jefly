@@ -11,6 +11,7 @@ Configuration Cloudinary :
 
 import os
 import logging
+from uuid import uuid4
 from typing import Optional
 
 import cloudinary
@@ -83,89 +84,55 @@ def validate_image_file(image_file) -> None:
         raise InvalidImageError("Le fichier image est vide.")
 
 
-def upload_profile_image(image_file, user_id: int) -> str:
-    """
-    Upload une image de profil vers Cloudinary.
-
-    Args:
-        image_file: Fichier image validé (InMemoryUploadedFile ou similaire)
-        user_id: ID de l'utilisateur pour générer un public_id unique
-
-    Returns:
-        str: URL sécurisée (HTTPS) de l'image uploadée
-
-    Raises:
-        CloudinaryError: Si l'upload échoue
-    """
-    import time
-
-    # Générer un public_id unique : profile_<user_id>_<timestamp>
-    public_id = f"profile_{user_id}_{int(time.time())}"
+def upload_image(image_file, folder: str, public_id_prefix: str) -> str:
+    """Upload une image et retourne uniquement son URL Cloudinary sécurisée."""
+    public_id = f"{public_id_prefix}_{uuid4().hex}"
 
     try:
-        # Upload vers Cloudinary
         result = cloudinary.uploader.upload(
             image_file,
             public_id=public_id,
-            folder="jefly/profiles",
+            folder=folder,
             resource_type="image",
             overwrite=False,
             transformation=[
-                {"width": 400, "height": 400, "crop": "fill", "gravity": "face"},
                 {"quality": "auto:good"},
                 {"fetch_format": "auto"},
             ],
         )
-
         secure_url = result.get("secure_url")
         if not secure_url:
             raise CloudinaryError("Cloudinary n'a pas retourné d'URL sécurisée.")
-
-        logger.info(
-            "Image de profil uploadée pour user_id=%s : %s", user_id, secure_url
-        )
         return secure_url
+    except cloudinary.exceptions.Error as exc:
+        logger.exception("Erreur Cloudinary lors de l'upload dans %s", folder)
+        raise CloudinaryError(f"Échec de l'upload vers Cloudinary : {exc}") from exc
+    except Exception as exc:
+        logger.exception("Erreur inattendue lors de l'upload dans %s", folder)
+        raise CloudinaryError(f"Erreur interne lors de l'upload : {exc}") from exc
 
-    except cloudinary.exceptions.Error as e:
-        logger.exception("Erreur Cloudinary lors de l'upload pour user_id=%s", user_id)
-        raise CloudinaryError(f"Échec de l'upload vers Cloudinary : {str(e)}") from e
-    except Exception as e:
-        logger.exception("Erreur inattendue lors de l'upload pour user_id=%s", user_id)
-        raise CloudinaryError(f"Erreur interne lors de l'upload : {str(e)}") from e
+
+def upload_profile_image(image_file, user_id: int) -> str:
+    """Upload une image de profil via le helper Cloudinary partagé."""
+    return upload_image(
+        image_file,
+        folder="jefly/profiles",
+        public_id_prefix=f"profile_{user_id}",
+    )
 
 
 def delete_profile_image(public_id: str) -> bool:
-    """
-    Supprime une image de profil sur Cloudinary.
-
-    Args:
-        public_id: Identifiant public de l'image sur Cloudinary
-
-    Returns:
-        bool: True si suppression réussie ou image déjà absente, False en cas d'erreur
-
-    Note:
-        Ne lève pas d'exception en cas d'échec pour ne pas bloquer la vue.
-        Les erreurs sont loggées.
-    """
+    """Supprime une image Cloudinary sans propager l'erreur à la vue."""
     if not public_id:
-        logger.warning("Tentative de suppression avec public_id vide")
         return True
 
     try:
         result = cloudinary.uploader.destroy(public_id, resource_type="image")
-        # Cloudinary retourne {"result": "ok"} ou {"result": "not found"}
-        success = result.get("result") in ("ok", "not found")
-        if success:
-            logger.info("Image Cloudinary supprimée : %s", public_id)
-        else:
-            logger.warning("Résultat inattendu suppression Cloudinary : %s", result)
-        return success
-
-    except cloudinary.exceptions.Error as e:
+        return result.get("result") in ("ok", "not found")
+    except cloudinary.exceptions.Error:
         logger.exception("Erreur Cloudinary lors de la suppression de %s", public_id)
         return False
-    except Exception as e:
+    except Exception:
         logger.exception("Erreur inattendue lors de la suppression de %s", public_id)
         return False
 
