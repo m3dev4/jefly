@@ -64,7 +64,8 @@ INSTALLED_APPS = [
     "User",
     "Service",
     "Technologie",
-    "freelance"
+    "freelance",
+    "announcer"
 ]
 
 MIDDLEWARE = [
