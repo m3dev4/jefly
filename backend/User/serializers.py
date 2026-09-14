@@ -29,6 +29,7 @@ from django.utils import timezone
 from django.utils.encoding import force_str
 from rest_framework import serializers
 
+from Technologie.models import Technologie
 from .models import User, optCode, session
 
 # Longueur minimale imposée aux mots de passe (inscription et réinitialisation).
@@ -586,6 +587,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
 
     profile_picture = serializers.ImageField(read_only=True, allow_null=True)
+    technologies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -598,6 +600,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "date_joined",
             "onboarding_completed",
             "profile_picture",
+            "technologies",
         ]
         read_only_fields = fields
 
@@ -654,6 +657,11 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    technologies = serializers.PrimaryKeyRelatedField(
+        many=True,
+        required=False,
+        queryset=Technologie.objects.all(),
+    )
 
     class Meta:
         model = User
@@ -662,6 +670,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             "last_name",
             "number_phone",
             "profile_picture",
+            "technologies",
         ]
 
     def validate_first_name(self, value: str) -> str:
@@ -712,9 +721,13 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
         Ne touche jamais au mot de passe ni à l'email.
         """
+        technologies = validated_data.pop("technologies", None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save(update_fields=list(validated_data.keys()))
+        if validated_data:
+            instance.save(update_fields=list(validated_data.keys()))
+        if technologies is not None:
+            instance.technologies.set(technologies)
         return instance
 
 

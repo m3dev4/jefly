@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -34,6 +36,11 @@ class User(AbstractUser):
     )
     onboarding_completed = models.BooleanField(default=False)
     googleId = models.CharField(max_length=255, blank=True, null=True)
+    technologies = models.ManyToManyField(
+        "Technologie.Technologie",
+        blank=True,
+        related_name="users",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
