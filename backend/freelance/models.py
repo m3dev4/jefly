@@ -15,14 +15,13 @@ class Freelancee(models.Model):
     description = models.TextField(max_length=5000)
     githubUrl = models.CharField(max_length=100, blank=True)
     linkedinUrl = models.CharField(max_length=100, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     technologies = models.ManyToManyField(
         "Technologie.Technologie",
         blank=True,
-        related_name="technologies",
+        related_name="freelance_profiles",
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Freelance profile of {self.user.first_name} {self.user.last_name}"
@@ -76,7 +75,6 @@ class Education(models.Model):
     description = models.TextField(max_length=5000, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
 
     def save(self, *args, **kwargs):
         if self.current:
