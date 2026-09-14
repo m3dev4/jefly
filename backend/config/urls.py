@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -11,14 +11,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-
-def trigger_error(request):
-    division_by_zero = 1 / 0
-
-
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("sentry-debug/", trigger_error),
     # Auth JWT
     path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
@@ -29,6 +23,7 @@ urlpatterns = [
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
     ),
+    path("api/auth/", include("User.urls")),  # Inclut les routes de l'application User
 ]
 
 if settings.DEBUG:

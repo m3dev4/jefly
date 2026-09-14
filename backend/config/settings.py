@@ -41,7 +41,9 @@ SECRET_KEY = config(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1,testserver").split(
+    ","
+)
 
 
 # Application definition
@@ -59,7 +61,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     # apps
-    "User"
+    "User",
 ]
 
 MIDDLEWARE = [
@@ -126,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "fr-fr"
 
 TIME_ZONE = "UTC"
 
@@ -185,3 +187,8 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+AUTH_USER_MODEL = "User.User"
+
+# Session management
+MAX_ACTIVE_SESSIONS = config("MAX_ACTIVE_SESSIONS", default=5, cast=int)
