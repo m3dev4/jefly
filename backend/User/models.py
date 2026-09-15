@@ -40,10 +40,9 @@ class User(AbstractUser):
         upload_to="profile_pictures/", blank=True, null=True
     )
     onboarding_completed = models.BooleanField(default=False)
+    onboarding_step = models.CharField(max_length=50, default="identite")
+    is_verified = models.BooleanField(default=False)
     googleId = models.CharField(max_length=255, blank=True, null=True)
-    service = models.ForeignKey(
-        "Service.Service", related_name="users", on_delete=models.SET_NULL, null=True
-    )
     role = models.CharField(
         max_length=20,
         choices=UserRole.choices,

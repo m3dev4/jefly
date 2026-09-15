@@ -12,6 +12,8 @@ import PasswordRecovery from './pages/auth/passwordRecovery/passwordRecovery.tsx
 import NewPassword from './pages/auth/newPassword/newPassword.tsx';
 import { Toaster } from './components/ui/toast';
 import Onboarding from './pages/auth/onboarding.tsx';
+import ProtectedRoute from './components/protectedRoute.tsx';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 const router = createBrowserRouter([
   {
@@ -31,7 +33,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/onboarding',
-    element: <Onboarding />,
+    element: (
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    ),
   },
 ]);
 
@@ -41,6 +47,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <Toaster>
         <RouterProvider router={router} />
+        <ReactQueryDevtools initialIsOpen={false} />
       </Toaster>
     </QueryClientProvider>
   </StrictMode>

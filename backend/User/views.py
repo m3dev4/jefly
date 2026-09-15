@@ -13,6 +13,7 @@ L'envoi d'emails est délégué au service email_service.
 Ce ViewSet ne fait qu'orchestrer le flux HTTP et la persistance.
 """
 
+from rest_framework.decorators import permission_classes
 import logging
 import random
 from datetime import timedelta
@@ -73,7 +74,7 @@ class AuthViewSet(viewsets.ViewSet):
     )
     def select_role(self, request):
         """Choisit définitivement le rôle freelance ou annonceur de l'utilisateur."""
-        if not request.user.is_active:
+        if not request.user.is_verified:
             return Response(
                 {"detail": "Le compte doit être vérifié avant de choisir un rôle."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -141,10 +142,10 @@ class AuthViewSet(viewsets.ViewSet):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Créer l'utilisateur (is_active=False par défaut via AbstractUser)
+        # Créer l'utilisateur (is_verified=False par défaut via AbstractUser)
         user = serializer.save()
-        user.is_active = False
-        user.save(update_fields=["is_active"])
+        user.is_verified = False
+        user.save(update_fields=["is_verified"])
 
         # Générer et persister le code OTP
         otp_obj = self._create_otp_code(user)
@@ -235,8 +236,8 @@ class AuthViewSet(viewsets.ViewSet):
 
         # Activer l'utilisateur
         user = otp_obj.user
-        user.is_active = True
-        user.save(update_fields=["is_active"])
+        user.is_verified = True
+        user.save(update_fields=["is_verified"])
 
         return Response(
             {
@@ -466,6 +467,7 @@ class AuthViewSet(viewsets.ViewSet):
         serializer = SessionSerializer(active_sessions, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 
 class ProfileViewSet(viewsets.ViewSet):
@@ -483,6 +485,7 @@ class ProfileViewSet(viewsets.ViewSet):
     """
 
     permission_classes = [IsAuthenticated]
+
 
     def get_object(self):
         """
@@ -677,6 +680,10 @@ class UserProfileView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class IsOnboardingComplete(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.onboarding_complete
+
+class MeViewSet(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data)

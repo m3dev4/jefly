@@ -4,7 +4,7 @@ from django.db import models
 class educationRole(models.TextChoices):
     UNIVERSITAIRE = "UNIVERSITAIRE", "Universitaire"
     FORMATION_PROFESSIONNELLE = "FORMATION_PROFESSIONNELLE", "Formation professionnelle"
-    FORMATION_CONTINUE = "FORMATION_CONTINUE", "Formation continue"
+    EN_LIGNE = "EN_LIGNE", "En ligne"
 
 
 class Freelancee(models.Model):
@@ -20,6 +20,9 @@ class Freelancee(models.Model):
         blank=True,
         related_name="freelance_profiles",
     )
+    service = models.ForeignKey(
+            "Service.Service", related_name="users", on_delete=models.PROTECT, null=True
+        )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -56,7 +59,8 @@ class Realisation(models.Model):
         Freelancee, on_delete=models.CASCADE, related_name="realisations"
     )
     title = models.CharField(max_length=100)
-    link = models.CharField(max_length=100)
+    description = models.TextField(max_length=5000, blank=True, default="")
+    link = models.CharField(max_length=100, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -69,6 +73,10 @@ class Education(models.Model):
     )
     role = models.CharField(max_length=100, choices=educationRole.choices)
     nom = models.CharField(max_length=100)
+    etablissement = models.CharField(max_length=200, blank=True, default="")
+    intitule = models.CharField(max_length=200, blank=True, default="")
+    date_obtention = models.DateField(null=True, blank=True)
+    lien_verification = models.URLField(max_length=500, blank=True, default="")
     startDate = models.DateField()
     endDate = models.DateField(null=True, blank=True)
     current = models.BooleanField(default=False)

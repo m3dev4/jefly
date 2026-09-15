@@ -618,6 +618,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "number_phone",
             "date_joined",
             "onboarding_completed",
+            "onboarding_step",
             "profile_picture",
             "role",
         ]
@@ -795,3 +796,22 @@ class DeleteProfileSerializer(serializers.Serializer):
         raise serializers.ValidationError(
             {"confirm_deletion": "Confirmation de suppression invalide."}
         )
+
+
+class MeSerializer(serializers.ModelSerializer):
+    """Sérialiseur pour l'endpoint /api/v1/me/"""
+    profile_picture = serializers.ImageField(read_only=True, allow_null=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+        ]
+        read_only_fields = fields
+
+
+
+
