@@ -3,6 +3,7 @@ from typing import Any
 from rest_framework import serializers
 
 from Technologie.models import Technologie
+from User.models import UserRole
 
 from .models import Education, Experience, Freelancee, Realisation
 
@@ -132,6 +133,10 @@ class FreelanceeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict[str, Any]) -> Freelancee:
         user = self.context["request"].user
+        if user.role != UserRole.FREELANCE:
+            raise serializers.ValidationError(
+                "Seul un utilisateur ayant le rôle freelance peut créer ce profil."
+            )
         if Freelancee.objects.filter(user=user).exists():
             raise serializers.ValidationError("Vous possédez déjà un profil freelance.")
         technologies = validated_data.pop("technologies", [])
@@ -142,6 +147,10 @@ class FreelanceeSerializer(serializers.ModelSerializer):
     def update(
         self, instance: Freelancee, validated_data: dict[str, Any]
     ) -> Freelancee:
+        if instance.user.role != UserRole.FREELANCE:
+            raise serializers.ValidationError(
+                "Seul un utilisateur ayant le rôle freelance peut modifier ce profil."
+            )
         technologies = validated_data.pop("technologies", None)
         for attribute, value in validated_data.items():
             setattr(instance, attribute, value)

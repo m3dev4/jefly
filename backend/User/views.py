@@ -28,6 +28,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import BasePermission
 
 from .email_service import send_otp_email, send_password_reset_email
 from .models import User, optCode, session
@@ -41,6 +42,7 @@ from .serializers import (
     ProfileSerializer,
     UpdateProfileSerializer,
     DeleteProfileSerializer,
+    RoleSelectionSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,6 +64,36 @@ class AuthViewSet(viewsets.ViewSet):
     """
 
     permission_classes = [AllowAny]
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="select-role",
+        permission_classes=[IsAuthenticated],
+    )
+    def select_role(self, request):
+        """Choisit définitivement le rôle freelance ou annonceur de l'utilisateur."""
+        if not request.user.is_active:
+            return Response(
+                {"detail": "Le compte doit être vérifié avant de choisir un rôle."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = RoleSelectionSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        request.user.role = serializer.validated_data["role"]
+        request.user.save(update_fields=["role"])
+
+        return Response(
+            {
+                "message": "Votre rôle a été enregistré définitivement.",
+                "role": request.user.role,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def _generate_otp_code(self) -> str:
         """Génère un code OTP à 6 chiffres."""
@@ -281,6 +313,7 @@ class AuthViewSet(viewsets.ViewSet):
                     "email": user.email,
                     "first_name": user.first_name,
                     "last_name": user.last_name,
+                    "role": user.role,
                 },
             },
             status=status.HTTP_200_OK,
@@ -642,3 +675,8 @@ class UserProfileView(APIView):
         request.user.save(update_fields=["profile_picture"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class IsOnboardingComplete(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.onboarding_complete

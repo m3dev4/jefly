@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 
+class UserRole(models.TextChoices):
+    FREELANCE = "freelance", "Freelance"
+    ANNONCEUR = "annonceur", "Annonceur"
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -36,7 +41,15 @@ class User(AbstractUser):
     )
     onboarding_completed = models.BooleanField(default=False)
     googleId = models.CharField(max_length=255, blank=True, null=True)
-    service = models.ForeignKey("Service.Service", related_name="users", on_delete=models.SET_NULL, null=True)
+    service = models.ForeignKey(
+        "Service.Service", related_name="users", on_delete=models.SET_NULL, null=True
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=UserRole.choices,
+        null=True,
+        blank=True,
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -44,6 +57,19 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"
+
+    def save(self, *args, **kwargs):
+        """Empêche toute modification du rôle après sa première attribution."""
+        if self.pk:
+            previous_role = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("role", flat=True)
+                .first()
+            )
+            if previous_role and self.role != previous_role:
+                raise ValueError("Le rôle d'un utilisateur ne peut pas être modifié.")
+        super().save(*args, **kwargs)
 
 
 class optCode(models.Model):

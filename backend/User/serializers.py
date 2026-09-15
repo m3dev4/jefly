@@ -29,10 +29,31 @@ from django.utils import timezone
 from django.utils.encoding import force_str
 from rest_framework import serializers
 
-from .models import User, optCode, session
+from .models import User, UserRole, optCode, session
 
 # Longueur minimale imposée aux mots de passe (inscription et réinitialisation).
 LONGUEUR_MIN_MOT_DE_PASSE: Final[int] = 8
+
+
+class RoleSelectionSerializer(serializers.Serializer):
+    """Valide le choix définitif du rôle utilisateur pendant l'onboarding."""
+
+    role = serializers.ChoiceField(
+        choices=UserRole.choices,
+        required=True,
+        error_messages={
+            "required": "Le rôle est obligatoire.",
+            "invalid_choice": "Le rôle doit être 'freelance' ou 'annonceur'.",
+        },
+    )
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        user = self.context["request"].user
+        if user.role:
+            raise serializers.ValidationError(
+                {"role": "Le rôle a déjà été choisi et ne peut plus être modifié."}
+            )
+        return attrs
 
 
 def _valider_robustesse_mot_de_passe(password: str) -> None:
@@ -598,6 +619,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "date_joined",
             "onboarding_completed",
             "profile_picture",
+            "role",
         ]
         read_only_fields = fields
 

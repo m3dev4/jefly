@@ -19,6 +19,12 @@ class AnnouncerViewSet(viewsets.GenericViewSet):
         GET/PATCH /api/announcer/me/ lit ou modifie le profil.
         POST /api/announcer/me/ crée le profil une seule fois.
         """
+        if request.user.role != "annonceur":
+            return Response(
+                {"detail": "Seul le rôle annonceur peut accéder à ce profil."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         profile = Announcer.objects.filter(user=request.user).first()
 
         if request.method == "GET":

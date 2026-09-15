@@ -29,6 +29,11 @@ class FreelanceViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=["get", "post", "patch"], url_path="me")
     def me(self, request):
         """Lit, crée une seule fois ou modifie le profil freelance connecté."""
+        if request.user.role != "freelance":
+            return Response(
+                {"detail": "Seul le rôle freelance peut accéder à ce profil."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         profile = Freelancee.objects.filter(user=request.user).first()
 
         if request.method == "GET":
@@ -70,6 +75,8 @@ class OwnedResourceViewSet(FreelanceOwnershipMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if self.request.user.role != "freelance":
+            return self.model.objects.none()
         return self.model.objects.filter(freelance=self.get_freelance())
 
     def perform_create(self, serializer):

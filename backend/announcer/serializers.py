@@ -2,6 +2,8 @@ from typing import Any
 
 from rest_framework import serializers
 
+from User.models import UserRole
+
 from .models import Announcer
 
 
@@ -57,6 +59,10 @@ class AnnouncerSerializer(serializers.ModelSerializer):
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if self.instance is None:
             user = self.context["request"].user
+            if user.role != UserRole.ANNONCEUR:
+                raise serializers.ValidationError(
+                    "Seul un utilisateur ayant le rôle annonceur peut créer ce profil."
+                )
             if Announcer.objects.filter(user=user).exists():
                 raise serializers.ValidationError(
                     "Vous possédez déjà un profil annonceur."
@@ -71,6 +77,10 @@ class AnnouncerSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data: dict[str, Any]) -> Announcer:
+        if self.context["request"].user.role != UserRole.ANNONCEUR:
+            raise serializers.ValidationError(
+                "Seul le rôle annonceur peut créer ce profil."
+            )
         return Announcer.objects.create(
             user=self.context["request"].user,
             **validated_data,
