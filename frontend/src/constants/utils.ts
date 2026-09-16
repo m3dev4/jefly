@@ -1,3 +1,5 @@
+import type { OnboardingStepConfig } from '../components/onboading/onboardingForm';
+
 export const MISSIONS = [
   {
     tags: [
@@ -61,10 +63,29 @@ export const FILTERS = [
   { label: 'Date limite:', value: 'Cette semaine' },
 ];
 
-
 export const NAV_LINKS = [
-  { label: "Comment ça marche", href: "#comment-ca-marche" },
-  { label: "Trouver une mission", href: "#missions" },
-  { label: "Trouver un freelance", href: "#freelances" },
-  { label: "À propos", href: "#a-propos" },
+  { label: 'Comment ça marche', href: '#comment-ca-marche' },
+  { label: 'Trouver une mission', href: '#missions' },
+  { label: 'Trouver un freelance', href: '#freelances' },
+  { label: 'À propos', href: '#a-propos' },
+];
+
+export const FREELANCE_ONBOARDING_STEPS: OnboardingStepConfig[] = [
+  { key: 'identite', label: 'Identité' },
+  { key: 'role', label: 'Choix du rôle' },
+  { key: 'presentation', label: 'Présentation' },
+  { key: 'service', label: 'Services' },
+  { key: 'technologies', label: 'Technologies' },
+  { key: 'experience', label: 'Expérience' },
+  { key: 'formation', label: 'Éducation' },
+  { key: 'realisations', label: 'Réalisations' },
+  { key: 'finalisation', label: 'Finalisation' },
+];
+
+export const ANNONCEUR_ONBOARDING_STEPS: OnboardingStepConfig[] = [
+  { key: 'identite', label: 'Identité' },
+  { key: 'role', label: 'Choix du rôle' },
+  { key: 'type_annonceur', label: "Type d'annonceur" },
+  { key: 'infos_entreprise', label: 'Infos entreprise' },
+  { key: 'finalisation', label: 'Finalisation' },
 ];

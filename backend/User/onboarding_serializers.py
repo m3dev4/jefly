@@ -67,9 +67,9 @@ class RoleSerializer(serializers.Serializer):
 
     def validate_role(self, value: str) -> str:
         user = self.context["request"].user
-        if user.role:
+        if user.onboarding_completed:
             raise serializers.ValidationError(
-                "Le rôle a déjà été choisi et ne peut plus être modifié."
+                "L'onboarding est déjà terminé."
             )
         return value
 

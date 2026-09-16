@@ -11,7 +11,7 @@ import VerifyMail from './pages/auth/verifyEmail/verifyMail.tsx';
 import PasswordRecovery from './pages/auth/passwordRecovery/passwordRecovery.tsx';
 import NewPassword from './pages/auth/newPassword/newPassword.tsx';
 import { Toaster } from './components/ui/toast';
-import Onboarding from './pages/auth/onboarding.tsx';
+import Onboarding from './pages/onboarding/onboarding.tsx';
 import ProtectedRoute from './components/protectedRoute.tsx';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 

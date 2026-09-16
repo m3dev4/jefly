@@ -544,6 +544,12 @@ class OnboardingStepView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
+    def put(self, request, step_name: str) -> Response:
+        return self.post(request, step_name)
+
+    def patch(self, request, step_name: str) -> Response:
+        return self.post(request, step_name)
+
     def post(self, request, step_name: str) -> Response:
         user = request.user
 
@@ -566,33 +572,20 @@ class OnboardingStepView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Séquentialité stricte : l'étape demandée doit être l'étape actuelle
-        if step_name != user.onboarding_step:
-            step_idx = get_step_index(steps, step_name)
-            current_idx = get_step_index(steps, user.onboarding_step)
+        # Vérifier que l'utilisateur n'essaie pas de sauter des étapes non complétées
+        step_idx = get_step_index(steps, step_name)
+        current_idx = get_step_index(steps, user.onboarding_step)
 
-            if step_idx > current_idx:
-                return Response(
-                    {
-                        "detail": (
-                            f"Vous ne pouvez pas accéder à l'étape '{step_name}'. "
-                            f"Vous devez d'abord compléter l'étape '{user.onboarding_step}'."
-                        ),
-                        "current_step": user.onboarding_step,
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            # Si step_idx < current_idx, c'est un retour en arrière
-            # => on utilise l'endpoint /back/ pour cela
+        if current_idx != -1 and step_idx > current_idx:
             return Response(
                 {
                     "detail": (
-                        f"L'étape '{step_name}' a déjà été complétée. "
-                        "Utilisez l'endpoint /onboarding/back/ pour la modifier."
+                        f"Vous ne pouvez pas accéder à l'étape '{step_name}'. "
+                        f"Vous devez d'abord compléter l'étape '{user.onboarding_step}'."
                     ),
                     "current_step": user.onboarding_step,
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Étapes répétables : experience, formation, realisations
