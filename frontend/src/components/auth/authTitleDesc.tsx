@@ -6,11 +6,11 @@ interface AuthTitleDescProps {
 
 const AuthTitleDesc = ({ title, description, span }: AuthTitleDescProps) => {
   return (
-    <div className="flex flex-col space-y-2 items-start">
-      <h2 className="text-3xl font-bold font-heading">
-        {title} <span className="text-secondary-jefly">{span}</span>
+    <div className="flex flex-col space-y-1.5 items-start w-full">
+      <h2 className="text-2xl sm:text-3xl font-bold font-heading text-neutral-900 tracking-tight">
+        {title} <span className="text-[#f2994a]">{span}</span>
       </h2>
-      <p className="text-gray-600 text-sm font-sans pl-0.5">{description}</p>
+      <p className="text-neutral-500 text-xs sm:text-sm leading-relaxed">{description}</p>
     </div>
   );
 };

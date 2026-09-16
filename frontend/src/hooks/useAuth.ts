@@ -107,14 +107,21 @@ export const useLogin = () => {
         localStorage.setItem('refresh_token', data.refresh);
       }
       if (data.user) {
+        queryClient.setQueryData(['currentUser'], data.user);
         queryClient.setQueryData(['auth', 'me'], data.user);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       }
       toast.add({
         title: 'Connexion réussie',
         description: data.message || 'Bienvenue sur Jëfly.',
         type: 'success',
       });
-      navigate('/onboarding');
+      if (data.user?.onboarding_completed) {
+        navigate('/espace');
+      } else {
+        navigate('/onboarding');
+      }
     },
     onError: (error) => {
       toast.add({

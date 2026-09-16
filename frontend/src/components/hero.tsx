@@ -20,14 +20,14 @@ const Hero = () => {
             qui analyse compétences et besoins réels - fini les groupes WhatsApp
             et les dizaines de candidatures à trier à la main.
           </p>
-          <Button
-            variant="default"
-            className="bg-secondary-jefly max-w-xs p-4 rounded-md hover:bg-secondary-jefly/90 cursor-pointer"
+          <button
+            type="button"
+            className="bg-[#f2994a] hover:bg-[#e0893a] max-w-xs py-3 px-5 rounded-lg transition-colors cursor-pointer text-white shadow-xs"
           >
-            <span className="font-sans text-text-jefly font-medium">
+            <span className="font-sans font-medium text-sm">
               Matcher • Connecter • Reussir
             </span>
-          </Button>
+          </button>
         </div>
         <div className="absolute right-0">
           <div>

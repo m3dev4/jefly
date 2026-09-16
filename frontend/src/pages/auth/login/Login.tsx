@@ -3,11 +3,11 @@ import LoginComponent from '../../../components/auth/login';
 
 const Login = () => {
   return (
-    <div className="flex flex-col space-y-2 justify-start items-start w-full h-full px-5 mt-2">
+    <div className="flex flex-col space-y-2 justify-start items-start w-full">
       <AuthTitleDesc
         title="Connectez-"
         span="vous"
-        description="Heureux de vous revoir"
+        description="Heureux de vous revoir sur Jëfly"
       />
       <LoginComponent />
     </div>

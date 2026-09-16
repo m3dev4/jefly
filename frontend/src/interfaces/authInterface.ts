@@ -22,6 +22,9 @@ export interface AuthResponse {
 }
 
 export interface AuthUser {
+  onboarding_completed: any;
+  role: string;
+  profile_picture: any;
   id: number;
   email: string;
   first_name: string;

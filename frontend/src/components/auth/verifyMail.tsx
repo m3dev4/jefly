@@ -49,17 +49,19 @@ const VerifyMailComponent = () => {
   return (
     <form
       noValidate
-      className="w-full flex flex-col items-center gap-8 mt-15"
+      className="w-full flex flex-col items-center gap-6 mt-6"
       onSubmit={handleSubmit((data) => verifyMutation.mutate(data))}
     >
-      <input
-        type="email"
-        placeholder="exemple@test.com"
-        className="w-full rounded-sm bg-gray-200 px-3 py-2"
-        {...register('email', { required: "L'email est obligatoire." })}
-      />
+      <div className="w-full">
+        <input
+          type="email"
+          placeholder="exemple@test.com"
+          className="w-full bg-neutral-50 border border-neutral-200 focus:border-[#1b4b6b] focus:bg-white text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition-colors placeholder:text-neutral-400"
+          {...register('email', { required: "L'email est obligatoire." })}
+        />
+      </div>
       <input type="hidden" {...register('code')} />
-      <div className="flex justify-between gap-3 w-full">
+      <div className="flex justify-between gap-2 sm:gap-3 w-full max-w-sm">
         {Array.from({ length: 6 }, (_, i) => i).map((i) => (
           <OptCode
             key={i}
@@ -70,36 +72,37 @@ const VerifyMailComponent = () => {
           />
         ))}
       </div>
-      <div className="flex flex-col items-center justify-center gap-3">
-        <p className="text-gray-400">Vous n'avez pas reçu de code ?</p>
-        <div className="flex items-center justify-center gap-7">
-          <Button variant="ghost">Renvoyer le code</Button>
-          <span>Time</span>
-        </div>
+      <div className="flex flex-col items-center justify-center gap-2 text-xs">
+        <p className="text-neutral-400">Vous n'avez pas reçu de code ?</p>
+        <button
+          type="button"
+          className="text-[#1b4b6b] font-semibold hover:underline cursor-pointer"
+        >
+          Renvoyer le code
+        </button>
       </div>
       <Button
         type="submit"
-        className="w-full p-5 bg-secondary-jefly text-text-jefly font-sans"
+        className="w-full h-11 bg-[#f2994a] hover:bg-[#e0893a] text-white font-semibold rounded-lg shadow-xs transition-colors cursor-pointer text-xs sm:text-sm"
         disabled={
           verifyMutation.isPending || !email || otp.join('').length !== 6
         }
       >
         {verifyMutation.isPending ? (
-          <Loader2 className="animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin text-white" />
         ) : (
           'Vérifier'
         )}
       </Button>
-      <div className="flex items-center justify-center mt-9">
-        <Button
+      <div className="flex items-center justify-center mt-4">
+        <button
           type="button"
-          variant="ghost"
-          className="cursor-pointer"
+          className="flex items-center gap-2 text-xs text-neutral-500 hover:text-neutral-800 transition-colors cursor-pointer p-2 rounded-lg hover:bg-neutral-100"
           onClick={() => navigate('/login')}
         >
-          <ArrowLeftIcon size={14} />
-          <span className="font-sans">Retour à la connexion</span>
-        </Button>
+          <ArrowLeftIcon className="w-3.5 h-3.5" />
+          <span>Retour à la connexion</span>
+        </button>
       </div>
     </form>
   );

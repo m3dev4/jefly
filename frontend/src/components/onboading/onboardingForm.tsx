@@ -12,6 +12,7 @@ import {
   useBackStep,
   useSkipStep,
 } from '../../hooks/useOnboarding';
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
 import { StepIdentite } from './steps/StepIdentite';
@@ -88,6 +89,8 @@ const OnboardingForm: React.FC = () => {
     }
   }, [statusData, navigate]);
 
+  const queryClient = useQueryClient();
+
   const activeStepIndex = useMemo(() => {
     const idx = steps.findIndex((s) => s.key === currentStepKey);
     return idx >= 0 ? idx : 0;
@@ -110,7 +113,8 @@ const OnboardingForm: React.FC = () => {
       }
 
       if (res.onboarding_completed || currentStepKey === 'finalisation') {
-        navigate('/');
+        await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+        navigate('/espace', { replace: true });
       } else if (res.next_step) {
         setCurrentStepKey(res.next_step);
       } else {

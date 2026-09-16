@@ -13,6 +13,7 @@ import NewPassword from './pages/auth/newPassword/newPassword.tsx';
 import { Toaster } from './components/ui/toast';
 import Onboarding from './pages/onboarding/onboarding.tsx';
 import ProtectedRoute from './components/protectedRoute.tsx';
+import PublicOnlyRoute from './components/publicOnlyRoute.tsx';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import EspaceLayout from './pages/espace/espaceLayout.tsx';
 import DashboardOverview from './pages/espace/DashboardOverview.tsx';
@@ -23,9 +24,13 @@ const router = createBrowserRouter([
     path: '/',
     element: <App />,
   },
-  // Authentication routes
+  // Authentication routes (accessible only when not logged in)
   {
-    element: <AuthLayout />,
+    element: (
+      <PublicOnlyRoute>
+        <AuthLayout />
+      </PublicOnlyRoute>
+    ),
     children: [
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },

@@ -1,14 +1,13 @@
-import { useNavigate } from 'react-router-dom';
-import { LogoJefly } from '../../assets/images';
-import { NAV_LINKS } from '../../constants/utils';
-import { useQuery } from '@tanstack/react-query';
-import getCurrentUser from '../../utils/getUser';
-import { Button } from '../ui/button';
+import { useNavigate } from "react-router-dom";
+import { LogoJefly } from "../../assets/images";
+import { NAV_LINKS } from "../../constants/utils";
+import { useQuery } from "@tanstack/react-query";
+import getCurrentUser from "../../utils/getUser";
 
 export default function Header() {
   const navigate = useNavigate();
   const { data: user } = useQuery({
-    queryKey: ['currentUser'],
+    queryKey: ["currentUser"],
     queryFn: getCurrentUser,
     retry: false,
   });
@@ -37,29 +36,32 @@ export default function Header() {
 
         {user ? (
           <>
-            <Button
-              onClick={() => navigate('/espace')}
-              className="py-2.5 px-5 cursor-pointer bg-secondary-jefly hover:bg-secondary-jefly/95 text-black font-heading font-semibold shadow-xs"
+            <button
+              type="button"
+              onClick={() =>
+                navigate(user.onboarding_completed ? "/espace" : "/onboarding")
+              }
+              className="py-2.5 px-5 rounded-lg cursor-pointer bg-[#f2994a] hover:bg-[#e0893a] text-white font-heading font-semibold text-sm shadow-xs transition-colors"
             >
               Mon espace
-            </Button>
+            </button>
           </>
         ) : (
           <div className="flex items-center gap-3">
-            <Button
+            <button
               type="button"
-              className="rounded-lg border border-black/10 px-5 py-2.5 font-sans text-sm font-medium text-[#1E1E24] transition hover:bg-black/5"
-              onClick={() => navigate('/login')}
+              className="rounded-lg border border-neutral-200 px-4 py-2 font-sans text-sm font-medium text-[#1E1E24] transition-colors hover:bg-neutral-100 cursor-pointer"
+              onClick={() => navigate("/login")}
             >
               Se connecter
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              className="rounded-lg bg-[#F2994A] px-5 py-2.5 font-sans text-sm font-semibold text-[#1E1E24] transition hover:bg-[#e28a3a]"
-              onClick={() => navigate('/register')}
+              className="rounded-lg bg-[#f2994a] px-4 py-2 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#e0893a] shadow-xs cursor-pointer"
+              onClick={() => navigate("/register")}
             >
               S'inscrire
-            </Button>
+            </button>
           </div>
         )}
       </div>
