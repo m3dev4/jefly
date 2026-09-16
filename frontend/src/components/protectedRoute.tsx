@@ -14,7 +14,6 @@ export default function ProtectedRoute({
     retry: false,
   });
 
-  console.log(user);
 
   if (isLoading) {
     return (

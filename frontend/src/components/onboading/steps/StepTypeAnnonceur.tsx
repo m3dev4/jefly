@@ -22,6 +22,12 @@ export const StepTypeAnnonceur: React.FC<StepTypeAnnonceurProps> = ({
     (initialType as 'Entreprise' | 'Particulier') || 'Entreprise'
   );
 
+  React.useEffect(() => {
+    if (initialType === 'Entreprise' || initialType === 'Particulier') {
+      setSelectedType(initialType);
+    }
+  }, [initialType]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(selectedType);

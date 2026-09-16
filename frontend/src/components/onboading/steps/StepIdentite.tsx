@@ -9,7 +9,11 @@ interface StepIdentiteProps {
   };
   stepNumber: number;
   totalSteps: number;
-  onSubmit: (data: { first_name: string; last_name: string; number_phone: string }) => void;
+  onSubmit: (data: {
+    first_name: string;
+    last_name: string;
+    number_phone: string;
+  }) => void;
   isLoading?: boolean;
 }
 
@@ -22,7 +26,9 @@ export const StepIdentite: React.FC<StepIdentiteProps> = ({
 }) => {
   const [firstName, setFirstName] = useState(initialData?.first_name || '');
   const [lastName, setLastName] = useState(initialData?.last_name || '');
-  const [phoneNumber, setPhoneNumber] = useState(initialData?.number_phone || '');
+  const [phoneNumber, setPhoneNumber] = useState(
+    initialData?.number_phone || ''
+  );
   const [error, setError] = useState('');
 
   React.useEffect(() => {

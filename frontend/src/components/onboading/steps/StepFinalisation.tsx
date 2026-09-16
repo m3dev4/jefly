@@ -53,10 +53,14 @@ export const StepFinalisation: React.FC<StepFinalisationProps> = ({
       </div>
 
       <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight mb-2">
-        Dernière étape : votre photo de profil
+        {role === 'annonceur'
+          ? 'Dernière étape : logo ou photo'
+          : 'Dernière étape : votre photo de profil'}
       </h1>
       <p className="text-neutral-500 text-sm sm:text-base mb-8">
-        Ajoutez une photo professionnelle pour humaniser vos échanges sur la plateforme.
+        {role === 'annonceur'
+          ? 'Ajoutez le logo de votre entreprise ou votre photo de profil pour inspirer confiance aux freelances.'
+          : 'Ajoutez une photo professionnelle pour humaniser vos échanges sur la plateforme.'}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">

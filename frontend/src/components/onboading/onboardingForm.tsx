@@ -33,21 +33,40 @@ export interface OnboardingStepConfig {
 
 const OnboardingForm: React.FC = () => {
   const navigate = useNavigate();
-  const { data: statusData, isLoading: isStatusLoading } = useOnboardingStatus();
+  const { data: statusData, isLoading: isStatusLoading } =
+    useOnboardingStatus();
   const submitStep = useSubmitStep();
   const backStep = useBackStep();
   const skipStep = useSkipStep();
 
-  const [activeRole, setActiveRole] = useState<'freelance' | 'annonceur' | null>(null);
+  const [activeRole, setActiveRole] = useState<
+    'freelance' | 'annonceur' | null
+  >(null);
+  const [activeTypeAnnonceur, setActiveTypeAnnonceur] = useState<string | null>(
+    null
+  );
   const [currentStepKey, setCurrentStepKey] = useState<string>('identite');
 
   const steps = useMemo(() => {
     const role = activeRole || statusData?.role;
     if (role === 'annonceur') {
+      const typeAnn =
+        activeTypeAnnonceur ||
+        statusData?.completed_data?.type_annonceur?.typeAnnonceur;
+      if (typeAnn === 'Particulier') {
+        return ANNONCEUR_ONBOARDING_STEPS.filter(
+          (s) => s.key !== 'infos_entreprise'
+        );
+      }
       return ANNONCEUR_ONBOARDING_STEPS;
     }
     return FREELANCE_ONBOARDING_STEPS;
-  }, [activeRole, statusData?.role]);
+  }, [
+    activeRole,
+    activeTypeAnnonceur,
+    statusData?.role,
+    statusData?.completed_data,
+  ]);
 
   useEffect(() => {
     if (statusData) {
@@ -57,6 +76,11 @@ const OnboardingForm: React.FC = () => {
       }
       if (statusData.role) {
         setActiveRole(statusData.role);
+      }
+      if (statusData.completed_data?.type_annonceur?.typeAnnonceur) {
+        setActiveTypeAnnonceur(
+          statusData.completed_data.type_annonceur.typeAnnonceur
+        );
       }
       if (statusData.onboarding_step) {
         setCurrentStepKey(statusData.onboarding_step);
@@ -77,7 +101,11 @@ const OnboardingForm: React.FC = () => {
         data,
       });
 
-      if (currentStepKey === 'role' && typeof data === 'object' && 'role' in data) {
+      if (
+        currentStepKey === 'role' &&
+        typeof data === 'object' &&
+        'role' in data
+      ) {
         setActiveRole(data.role as 'freelance' | 'annonceur');
       }
 
@@ -148,7 +176,8 @@ const OnboardingForm: React.FC = () => {
 
   // Render current step form
   const renderStepContent = () => {
-    const isPending = submitStep.isPending || skipStep.isPending || backStep.isPending;
+    const isPending =
+      submitStep.isPending || skipStep.isPending || backStep.isPending;
     const stepNum = activeStepIndex + 1;
     const total = steps.length;
 
@@ -198,7 +227,9 @@ const OnboardingForm: React.FC = () => {
             stepNumber={stepNum}
             totalSteps={total}
             onBack={handleBack}
-            onSubmit={(serviceId) => handleStepSubmit({ service_id: serviceId })}
+            onSubmit={(serviceId) =>
+              handleStepSubmit({ service_id: serviceId })
+            }
             isLoading={isPending}
           />
         );
@@ -210,7 +241,9 @@ const OnboardingForm: React.FC = () => {
             stepNumber={stepNum}
             totalSteps={total}
             onBack={handleBack}
-            onSubmit={(techIds) => handleStepSubmit({ technology_ids: techIds })}
+            onSubmit={(techIds) =>
+              handleStepSubmit({ technology_ids: techIds })
+            }
             isLoading={isPending}
           />
         );
@@ -257,11 +290,18 @@ const OnboardingForm: React.FC = () => {
       case 'type_annonceur':
         return (
           <StepTypeAnnonceur
-            initialType={completedData.type_annonceur?.typeAnnonceur}
+            initialType={
+              activeTypeAnnonceur ||
+              completedData.type_annonceur?.typeAnnonceur ||
+              'Entreprise'
+            }
             stepNumber={stepNum}
             totalSteps={total}
             onBack={handleBack}
-            onSubmit={(type) => handleStepSubmit({ typeAnnonceur: type })}
+            onSubmit={(type) => {
+              setActiveTypeAnnonceur(type);
+              handleStepSubmit({ typeAnnonceur: type });
+            }}
             isLoading={isPending}
           />
         );
@@ -303,7 +343,9 @@ const OnboardingForm: React.FC = () => {
       default:
         return (
           <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Étape en cours de chargement...</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Étape en cours de chargement...
+            </h2>
             <button
               onClick={() => setCurrentStepKey('identite')}
               className="text-sm text-[#f2994a] underline"
@@ -323,7 +365,12 @@ const OnboardingForm: React.FC = () => {
         <div className="flex flex-col items-start mb-4">
           <img src={LogoJefly} alt="Jëfly" className="h-7 w-auto mb-3" />
           <h2 className="font-heading font-semibold text-xl lg:text-2xl text-neutral-900 tracking-tight">
-            Configurons votre profil {activeRole ? (activeRole === 'freelance' ? 'freelance' : 'annonceur') : ''}
+            Configurons votre profil{' '}
+            {activeRole
+              ? activeRole === 'freelance'
+                ? 'freelance'
+                : 'annonceur'
+              : ''}
           </h2>
         </div>
 
