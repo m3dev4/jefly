@@ -1,31 +1,31 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogoJefly } from '../../assets/images';
-import StepOnboarding from './stepOnboarding';
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { LogoJefly } from "../../assets/images";
+import StepOnboarding from "./stepOnboarding";
 import {
   FREELANCE_ONBOARDING_STEPS,
   ANNONCEUR_ONBOARDING_STEPS,
-} from '../../constants/utils';
+} from "../../constants/utils";
 import {
   useOnboardingStatus,
   useSubmitStep,
   useBackStep,
   useSkipStep,
-} from '../../hooks/useOnboarding';
-import { useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+} from "../../hooks/useOnboarding";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
-import { StepIdentite } from './steps/StepIdentite';
-import { StepRole } from './steps/StepRole';
-import { StepPresentation } from './steps/StepPresentation';
-import { StepServices } from './steps/StepServices';
-import { StepTechnologies } from './steps/StepTechnologies';
-import { StepExperience } from './steps/StepExperience';
-import { StepFormation } from './steps/StepFormation';
-import { StepRealisations } from './steps/StepRealisations';
-import { StepTypeAnnonceur } from './steps/StepTypeAnnonceur';
-import { StepInfosEntreprise } from './steps/StepInfosEntreprise';
-import { StepFinalisation } from './steps/StepFinalisation';
+import { StepIdentite } from "./steps/StepIdentite";
+import { StepRole } from "./steps/StepRole";
+import { StepPresentation } from "./steps/StepPresentation";
+import { StepServices } from "./steps/StepServices";
+import { StepTechnologies } from "./steps/StepTechnologies";
+import { StepExperience } from "./steps/StepExperience";
+import { StepFormation } from "./steps/StepFormation";
+import { StepRealisations } from "./steps/StepRealisations";
+import { StepTypeAnnonceur } from "./steps/StepTypeAnnonceur";
+import { StepInfosEntreprise } from "./steps/StepInfosEntreprise";
+import { StepFinalisation } from "./steps/StepFinalisation";
 
 export interface OnboardingStepConfig {
   key: string;
@@ -41,22 +41,22 @@ const OnboardingForm: React.FC = () => {
   const skipStep = useSkipStep();
 
   const [activeRole, setActiveRole] = useState<
-    'freelance' | 'annonceur' | null
+    "freelance" | "annonceur" | null
   >(null);
   const [activeTypeAnnonceur, setActiveTypeAnnonceur] = useState<string | null>(
     null
   );
-  const [currentStepKey, setCurrentStepKey] = useState<string>('identite');
+  const [currentStepKey, setCurrentStepKey] = useState<string>("identite");
 
   const steps = useMemo(() => {
     const role = activeRole || statusData?.role;
-    if (role === 'annonceur') {
+    if (role === "annonceur") {
       const typeAnn =
         activeTypeAnnonceur ||
         statusData?.completed_data?.type_annonceur?.typeAnnonceur;
-      if (typeAnn === 'Particulier') {
+      if (typeAnn === "Particulier") {
         return ANNONCEUR_ONBOARDING_STEPS.filter(
-          (s) => s.key !== 'infos_entreprise'
+          (s) => s.key !== "infos_entreprise"
         );
       }
       return ANNONCEUR_ONBOARDING_STEPS;
@@ -72,7 +72,7 @@ const OnboardingForm: React.FC = () => {
   useEffect(() => {
     if (statusData) {
       if (statusData.onboarding_completed) {
-        navigate('/');
+        navigate("/");
         return;
       }
       if (statusData.role) {
@@ -105,16 +105,16 @@ const OnboardingForm: React.FC = () => {
       });
 
       if (
-        currentStepKey === 'role' &&
-        typeof data === 'object' &&
-        'role' in data
+        currentStepKey === "role" &&
+        typeof data === "object" &&
+        "role" in data
       ) {
-        setActiveRole(data.role as 'freelance' | 'annonceur');
+        setActiveRole(data.role as "freelance" | "annonceur");
       }
 
-      if (res.onboarding_completed || currentStepKey === 'finalisation') {
-        await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-        navigate('/espace', { replace: true });
+      if (res.onboarding_completed || currentStepKey === "finalisation") {
+        await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        navigate("/espace", { replace: true });
       } else if (res.next_step) {
         setCurrentStepKey(res.next_step);
       } else {
@@ -186,7 +186,7 @@ const OnboardingForm: React.FC = () => {
     const total = steps.length;
 
     switch (currentStepKey) {
-      case 'identite':
+      case "identite":
         return (
           <StepIdentite
             initialData={completedData.identite}
@@ -197,10 +197,10 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'role':
+      case "role":
         return (
           <StepRole
-            initialRole={activeRole || completedData.role?.role || 'freelance'}
+            initialRole={activeRole || completedData.role?.role || "freelance"}
             stepNumber={stepNum}
             totalSteps={total}
             onBack={handleBack}
@@ -212,7 +212,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'presentation':
+      case "presentation":
         return (
           <StepPresentation
             initialData={completedData.presentation}
@@ -224,7 +224,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'service':
+      case "service":
         return (
           <StepServices
             initialServiceId={completedData.service?.service_id}
@@ -238,7 +238,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'technologies':
+      case "technologies":
         return (
           <StepTechnologies
             initialTechIds={completedData.technologies?.technology_ids}
@@ -252,7 +252,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'experience':
+      case "experience":
         return (
           <StepExperience
             initialData={completedData.experience}
@@ -265,7 +265,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'formation':
+      case "formation":
         return (
           <StepFormation
             initialData={completedData.formation}
@@ -278,7 +278,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'realisations':
+      case "realisations":
         return (
           <StepRealisations
             initialData={completedData.realisations}
@@ -291,13 +291,13 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'type_annonceur':
+      case "type_annonceur":
         return (
           <StepTypeAnnonceur
             initialType={
               activeTypeAnnonceur ||
               completedData.type_annonceur?.typeAnnonceur ||
-              'Entreprise'
+              "Entreprise"
             }
             stepNumber={stepNum}
             totalSteps={total}
@@ -310,7 +310,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'infos_entreprise':
+      case "infos_entreprise":
         return (
           <StepInfosEntreprise
             initialData={completedData.infos_entreprise}
@@ -322,7 +322,7 @@ const OnboardingForm: React.FC = () => {
           />
         );
 
-      case 'finalisation':
+      case "finalisation":
         return (
           <StepFinalisation
             role={activeRole}
@@ -333,11 +333,11 @@ const OnboardingForm: React.FC = () => {
             onSubmit={({ profile_picture, githubUrl }) => {
               if (profile_picture) {
                 const formData = new FormData();
-                formData.append('profile_picture', profile_picture);
-                if (githubUrl) formData.append('githubUrl', githubUrl);
+                formData.append("profile_picture", profile_picture);
+                if (githubUrl) formData.append("githubUrl", githubUrl);
                 handleStepSubmit(formData);
               } else {
-                handleStepSubmit({ githubUrl: githubUrl || '' });
+                handleStepSubmit({ githubUrl: githubUrl || "" });
               }
             }}
             isLoading={isPending}
@@ -351,7 +351,7 @@ const OnboardingForm: React.FC = () => {
               Étape en cours de chargement...
             </h2>
             <button
-              onClick={() => setCurrentStepKey('identite')}
+              onClick={() => setCurrentStepKey("identite")}
               className="text-sm text-[#f2994a] underline"
             >
               Revenir au début
@@ -369,12 +369,12 @@ const OnboardingForm: React.FC = () => {
         <div className="flex flex-col items-start mb-4">
           <img src={LogoJefly} alt="Jëfly" className="h-7 w-auto mb-3" />
           <h2 className="font-heading font-semibold text-xl lg:text-2xl text-neutral-900 tracking-tight">
-            Configurons votre profil{' '}
+            Configurons votre profil{" "}
             {activeRole
-              ? activeRole === 'freelance'
-                ? 'freelance'
-                : 'annonceur'
-              : ''}
+              ? activeRole === "freelance"
+                ? "freelance"
+                : "annonceur"
+              : ""}
           </h2>
         </div>
 

@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/", include("Technologie.urls")),
     path("api/", include("freelance.urls")),
     path("api/", include("announcer.urls")),
+    path("api/", include("mission.urls")),
 ]
 
 if settings.DEBUG:

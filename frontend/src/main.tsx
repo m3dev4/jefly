@@ -18,6 +18,10 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import EspaceLayout from './pages/espace/espaceLayout.tsx';
 import DashboardOverview from './pages/espace/DashboardOverview.tsx';
 import PlaceholderPage from './pages/espace/PlaceholderPage.tsx';
+import MissionFormPage from './pages/espace/MissionFormPage.tsx';
+import MissionsPage from './pages/espace/MissionsPage.tsx';
+import FreelanceMissionsPage from './pages/espace/FreelanceMissionsPage.tsx';
+import MissionDetailPage from './pages/espace/MissionDetailPage.tsx';
 
 const router = createBrowserRouter([
   {
@@ -61,12 +65,11 @@ const router = createBrowserRouter([
       // Freelance routes
       {
         path: 'missions',
-        element: (
-          <PlaceholderPage
-            title="Rechercher une mission"
-            description="Découvrez les missions disponibles qui correspondent à vos compétences."
-          />
-        ),
+        element: <FreelanceMissionsPage />,
+      },
+      {
+        path: 'missions/:missionId',
+        element: <MissionDetailPage />,
       },
       {
         path: 'candidatures',
@@ -98,21 +101,15 @@ const router = createBrowserRouter([
       // Annonceur routes
       {
         path: 'publier-mission',
-        element: (
-          <PlaceholderPage
-            title="Publier une mission"
-            description="Rédigez une annonce pour recruter rapidement des freelances qualifiés."
-          />
-        ),
+        element: <MissionFormPage />,
       },
       {
         path: 'mes-annonces',
-        element: (
-          <PlaceholderPage
-            title="Mes annonces"
-            description="Gérez la visibilité, les détails et le statut de vos missions publiées."
-          />
-        ),
+        element: <MissionsPage />,
+      },
+      {
+        path: 'mes-annonces/:missionId/modifier',
+        element: <MissionFormPage />,
       },
       {
         path: 'candidatures-recues',
