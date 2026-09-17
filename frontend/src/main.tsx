@@ -22,6 +22,10 @@ import MissionFormPage from './pages/espace/MissionFormPage.tsx';
 import MissionsPage from './pages/espace/MissionsPage.tsx';
 import FreelanceMissionsPage from './pages/espace/FreelanceMissionsPage.tsx';
 import MissionDetailPage from './pages/espace/MissionDetailPage.tsx';
+import CandidaturesRecuesPage from './pages/espace/annonceur/CandidaturesRecuesPage.tsx';
+import AnnonceurEspacePage from './pages/espace/annonceur/AnnonceurEspacePage.tsx';
+import FreelanceMesMissionsPage from './pages/espace/freelance/FreelanceMesMissionsPage.tsx';
+import ProjectWorkspacePage from './pages/espace/workspace/ProjectWorkspacePage.tsx';
 
 const router = createBrowserRouter([
   {
@@ -73,21 +77,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'candidatures',
-        element: (
-          <PlaceholderPage
-            title="Mes candidatures"
-            description="Suivez l'état de vos propositions et candidatures envoyées aux annonceurs."
-          />
-        ),
+        element: <FreelanceMesMissionsPage />,
       },
       {
         path: 'mes-missions',
-        element: (
-          <PlaceholderPage
-            title="Mes missions"
-            description="Consultez vos missions en cours, livrables et contrats validés."
-          />
-        ),
+        element: <FreelanceMesMissionsPage />,
       },
       {
         path: 'paiements-recus',
@@ -112,13 +106,12 @@ const router = createBrowserRouter([
         element: <MissionFormPage />,
       },
       {
+        path: 'projets',
+        element: <ProjectWorkspacePage />,
+      },
+      {
         path: 'candidatures-recues',
-        element: (
-          <PlaceholderPage
-            title="Candidatures reçues"
-            description="Consultez et évaluez les profils des freelances ayant postulé à vos annonces."
-          />
-        ),
+        element: <CandidaturesRecuesPage />,
       },
       {
         path: 'paiements-effectues',

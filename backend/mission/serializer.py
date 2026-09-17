@@ -18,6 +18,7 @@ class MissionSerializer(ModelSerializer):
             "budget",
             "service",
             "annonceur",
+            "status",
             "created_at",
             "updated_at",
         ]

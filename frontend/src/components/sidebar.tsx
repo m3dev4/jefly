@@ -41,9 +41,9 @@ export const FREELANCE_SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
     title: 'Principal',
     items: [
       { id: 'dashboard', label: 'Tableau de bord', url: '/espace', icon: Home },
+      { id: 'espace-projets', label: 'Espace Projets', url: '/espace/projets', icon: Briefcase },
       { id: 'search-missions', label: 'Rechercher une mission', url: '/espace/missions', icon: Search },
       { id: 'candidatures', label: 'Mes candidatures', url: '/espace/candidatures', icon: ListChecks, badge: 12, badgeVariant: 'gray' },
-      { id: 'mes-missions', label: 'Mes missions', url: '/espace/mes-missions', icon: Briefcase },
     ],
   },
   {
@@ -72,6 +72,7 @@ export const ANNONCEUR_SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
     title: 'Principal',
     items: [
       { id: 'dashboard', label: 'Tableau de bord', url: '/espace', icon: Home },
+      { id: 'espace-projets', label: 'Espace Projets', url: '/espace/projets', icon: Briefcase },
       { id: 'publier-mission', label: 'Publier une mission', url: '/espace/publier-mission', icon: Megaphone },
       { id: 'mes-annonces', label: 'Mes annonces', url: '/espace/mes-annonces', icon: ListChecks },
       { id: 'candidatures-recues', label: 'Candidatures reçues', url: '/espace/candidatures-recues', icon: Laptop, badge: 5, badgeVariant: 'orange' },
