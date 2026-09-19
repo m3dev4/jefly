@@ -19,6 +19,10 @@ import sentry_sdk
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
 sentry_sdk.init(
     dsn="https://bf5b55c27e0631a0b48484894efb506e@o4509083601534976.ingest.us.sentry.io/4512070756335616",
     send_default_pii=True,
@@ -33,10 +37,7 @@ sentry_sdk.init(
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(
-    "SECRET_KEY",
-    default="django-insecure-^6%7s75i#rwgy03qdcsxpgbmk17ed*37^3ydt0xbprfcuvve*!",
-)
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -106,8 +108,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": config("MYSQL_DATABASE_NAME"),
+        "USER": config("MYSQL_DATABASE_USER"),
+        "PASSWORD": config("MYSQL_DATABASE_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("MYSQL_DATABASE_PORT", default="3306"),
     }
 }
 
