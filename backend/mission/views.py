@@ -30,7 +30,7 @@ class MissionViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        queryset = Mission.objects.select_related("service", "annonceur")
+        queryset = Mission.objects.select_related("service", "annonceur").prefetch_related("technologies")
         if self.request.user.role == UserRole.FREELANCE:
             return queryset
         if self.request.user.role != UserRole.ANNONCEUR:

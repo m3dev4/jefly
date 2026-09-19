@@ -45,7 +45,30 @@ const FreelanceMissionsPage: React.FC = () => {
           <div className="mb-3 flex items-center justify-between"><span className="rounded-full bg-[#eaf7ef] px-2 py-1 text-[9px] font-semibold uppercase text-[#29935a]">Nouveau</span><span className="text-[10px] text-neutral-400">#{mission.id}</span></div>
           <h2 className="mb-2 line-clamp-2 font-heading text-[13px] font-semibold leading-snug text-[#24282b]">{mission.title}</h2>
           <p className="line-clamp-3 text-[11px] leading-relaxed text-neutral-500">{mission.description}</p>
-          <div className="mt-auto pt-4"><div className="mb-3 flex flex-wrap gap-1.5"><span className="inline-flex items-center gap-1 rounded-full bg-[#f7f5f1] px-2 py-1 text-[9px] text-neutral-500"><WalletCards className="h-2.5 w-2.5" /> {mission.operateurMobileMoney}</span><span className="inline-flex items-center gap-1 rounded-full bg-[#f7f5f1] px-2 py-1 text-[9px] text-neutral-500"><Clock3 className="h-2.5 w-2.5" /> Échéance</span></div><div className="flex items-end justify-between border-t border-[#f2efeb] pt-3"><div><p className="text-[8px] uppercase tracking-wide text-neutral-400">Budget estimé</p><p className="mt-0.5 text-[11px] font-semibold text-[#1b4b6b]">{formatBudget(mission.budget)}</p></div><button type="button" onClick={() => navigate(`/espace/missions/${mission.id}`)} className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1b4b6b] hover:underline">Voir la mission <ArrowRight className="h-3 w-3" /></button></div></div>
+          <div className="mt-auto pt-4">
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#f7f5f1] px-2 py-1 text-[9px] text-neutral-500">
+                <WalletCards className="h-2.5 w-2.5" /> {mission.operateurMobileMoney}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#f7f5f1] px-2 py-1 text-[9px] text-neutral-500">
+                <Clock3 className="h-2.5 w-2.5" /> {formatDate(mission.date_deadline)}
+              </span>
+              {mission.technologies_detail?.map((tech) => (
+                <span key={tech.id} className="inline-flex items-center gap-1 rounded-full bg-[#f0f4f8] border border-[#d2e2ee] px-2 py-0.5 text-[9px] font-semibold text-[#1b4b6b]">
+                  {tech.name}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-end justify-between border-t border-[#f2efeb] pt-3">
+              <div>
+                <p className="text-[8px] uppercase tracking-wide text-neutral-400">Budget estimé</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-[#1b4b6b]">{formatBudget(mission.budget)}</p>
+              </div>
+              <button type="button" onClick={() => navigate(`/espace/missions/${mission.id}`)} className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1b4b6b] hover:underline cursor-pointer">
+                Voir la mission <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
         </article>)}
       </div>
     </div>

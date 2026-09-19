@@ -8,6 +8,12 @@ export interface ServiceOption {
   description?: string;
 }
 
+export interface TechnologieOption {
+  id: number;
+  name: string;
+  imgUrl: string;
+}
+
 export interface Mission {
   id: number;
   title: string;
@@ -16,6 +22,9 @@ export interface Mission {
   operateurMobileMoney: PaymentOperator;
   budget: number;
   service: number;
+  service_detail?: ServiceOption;
+  technologies?: number[];
+  technologies_detail?: TechnologieOption[];
   annonceur: number;
   created_at: string;
   updated_at: string;
@@ -28,6 +37,7 @@ export interface MissionPayload {
   operateurMobileMoney: PaymentOperator;
   budget: number;
   service: number;
+  technologies?: number[];
 }
 
 const unwrapList = <T>(data: T[] | { results: T[] }): T[] =>

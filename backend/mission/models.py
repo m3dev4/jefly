@@ -21,6 +21,11 @@ class Mission(models.Model):
     operateurMobileMoney = models.CharField(max_length=50, choices=OperateurMobileMoneyType.choices)
     budget = models.IntegerField()
     service = models.ForeignKey("Service.Service", on_delete=models.CASCADE)
+    technologies = models.ManyToManyField(
+        "Technologie.Technologie",
+        blank=True,
+        related_name="missions",
+    )
     annonceur = models.ForeignKey("announcer.Announcer", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=20,

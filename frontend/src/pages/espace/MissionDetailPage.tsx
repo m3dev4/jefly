@@ -274,6 +274,29 @@ const MissionDetailPage: React.FC = () => {
                   {serviceName}
                 </span>
               </div>
+
+              {mission.technologies_detail && mission.technologies_detail.length > 0 && (
+                <div className="mt-5 border-t border-[#f0ede8] pt-5">
+                  <h2 className="mb-3 font-heading text-sm font-semibold text-[#20252a]">
+                    Technologies requises
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {mission.technologies_detail.map((tech) => (
+                      <span
+                        key={tech.id}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#f0f4f8] border border-[#d2e2ee] px-3 py-1 text-[10.5px] font-semibold text-[#1b4b6b]"
+                      >
+                        {tech.imgUrl ? (
+                          <img src={tech.imgUrl} alt={tech.name} className="h-3.5 w-3.5 object-contain" />
+                        ) : (
+                          <Code2 className="h-3.5 w-3.5 text-[#f2994a]" />
+                        )}
+                        {tech.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
             <aside className="h-fit rounded-lg border border-[#ebe8e2] bg-white p-5">
               <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">

@@ -56,6 +56,15 @@ const MissionsPage: React.FC = () => {
               <div className="min-w-0">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2"><h2 className="truncate font-heading text-[13px] font-semibold text-[#24282b]">{mission.title}</h2><span className="inline-flex items-center gap-1 rounded-full bg-[#eaf7ef] px-2 py-0.5 text-[9px] font-semibold text-[#29935a]"><CheckCircle2 className="h-2.5 w-2.5" /> ACTIVE</span></div>
                 <p className="line-clamp-1 text-[11px] text-neutral-500">{mission.description}</p>
+                {mission.technologies_detail && mission.technologies_detail.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {mission.technologies_detail.map((tech) => (
+                      <span key={tech.id} className="inline-flex items-center gap-1 rounded-full bg-[#f0f4f8] border border-[#d2e2ee] px-2 py-0.5 text-[9.5px] font-semibold text-[#1b4b6b]">
+                        {tech.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="relative shrink-0">
                 <button type="button" onClick={() => setOpenMenu(openMenu === mission.id ? null : mission.id)} className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700" title="Actions"><MoreVertical className="h-4 w-4" /></button>
