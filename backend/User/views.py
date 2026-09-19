@@ -21,6 +21,7 @@ from datetime import timedelta
 from django.contrib.auth.tokens import default_token_generator
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -467,7 +468,146 @@ class AuthViewSet(viewsets.ViewSet):
         serializer = SessionSerializer(active_sessions, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="change-password",
+        permission_classes=[IsAuthenticated],
+    )
+    def change_password(self, request):
+        """
+        Changement de mot de passe de l'utilisateur connecté.
+
+        POST /api/auth/change-password/
+
+        Payload attendu :
+            {
+                "old_password": "AncienMdp123!",
+                "new_password": "NouveauMdp456!"
+            }
+
+        Réponses :
+            - 200 : Mot de passe modifié avec succès
+            - 400 : Ancien mot de passe incorrect ou nouveau mot de passe invalide
+            - 401 : Non authentifié
+        """
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+
+        if not old_password or not new_password:
+            return Response(
+                {"error": "L'ancien et le nouveau mot de passe sont requis."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not request.user.check_password(old_password):
+            return Response(
+                {"error": "L'ancien mot de passe est incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            from django.contrib.auth.password_validation import validate_password
+            validate_password(new_password, request.user)
+        except DjangoValidationError as e:
+            return Response(
+                {"error": e.messages},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=["password"])
+
+        return Response(
+            {"message": "Mot de passe modifié avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="revoke-session",
+        permission_classes=[IsAuthenticated],
+    )
+    def revoke_session(self, request):
+        """
+        Révoque (désactive) une session spécifique de l'utilisateur connecté.
+
+        POST /api/auth/revoke-session/
+
+        Payload attendu :
+            {
+                "session_id": 42
+            }
+
+        Réponses :
+            - 200 : Session révoquée
+            - 400 : session_id manquant
+            - 404 : Session non trouvée
+        """
+        session_id = request.data.get("session_id")
+        if not session_id:
+            return Response(
+                {"error": "L'identifiant de la session est requis."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            target_session = session.objects.get(
+                id=session_id, user=request.user, is_active=True
+            )
+        except session.DoesNotExist:
+            return Response(
+                {"error": "Session introuvable ou déjà révoquée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        target_session.is_active = False
+        target_session.save(update_fields=["is_active"])
+
+        return Response(
+            {"message": "Session révoquée avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="revoke-all-other-sessions",
+        permission_classes=[IsAuthenticated],
+    )
+    def revoke_all_other_sessions(self, request):
+        """
+        Révoque toutes les sessions actives de l'utilisateur sauf la session courante.
+
+        POST /api/auth/revoke-all-other-sessions/
+
+        La session courante est identifiée par le refresh_token envoyé dans le body.
+
+        Payload attendu :
+            {
+                "current_refresh_token": "eyJ..."
+            }
+
+        Réponses :
+            - 200 : Toutes les autres sessions révoquées
+            - 401 : Non authentifié
+        """
+        current_token = request.data.get("current_refresh_token", "")
+
+        revoked_count = session.objects.filter(
+            user=request.user, is_active=True
+        ).exclude(token=current_token).update(is_active=False)
+
+        return Response(
+            {
+                "message": f"{revoked_count} session(s) révoquée(s).",
+                "revoked_count": revoked_count,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 
 class ProfileViewSet(viewsets.ViewSet):

@@ -26,6 +26,8 @@ import CandidaturesRecuesPage from './pages/espace/annonceur/CandidaturesRecuesP
 import AnnonceurEspacePage from './pages/espace/annonceur/AnnonceurEspacePage.tsx';
 import FreelanceMesMissionsPage from './pages/espace/freelance/FreelanceMesMissionsPage.tsx';
 import ProjectWorkspacePage from './pages/espace/workspace/ProjectWorkspacePage.tsx';
+import ProfilePage from './pages/espace/ProfilePage.tsx';
+import SettingsPage from './pages/espace/SettingsPage.tsx';
 
 const router = createBrowserRouter([
   {
@@ -134,21 +136,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'profil',
-        element: (
-          <PlaceholderPage
-            title="Mon profil"
-            description="Consultez et personnalisez les informations visibles sur votre profil."
-          />
-        ),
+        element: <ProfilePage />,
       },
       {
         path: 'parametres',
-        element: (
-          <PlaceholderPage
-            title="Paramètres"
-            description="Gérez vos préférences de compte, mot de passe et notifications."
-          />
-        ),
+        element: <SettingsPage />,
       },
       {
         path: 'aide',

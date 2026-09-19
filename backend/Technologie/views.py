@@ -23,30 +23,27 @@ class TechnologieViewSet(ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy"}:
+        if self.action in {"update", "partial_update", "destroy"}:
             return [IsAdminUser()]
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        """Crée une technologie et stocke uniquement l'URL Cloudinary."""
+        """Crée une technologie dans le catalogue global."""
         image_file = request.FILES.get("image")
-        if image_file is None:
-            return Response(
-                {"image": ["Le fichier image est obligatoire."]},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        image_url = request.data.get("imgUrl", "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg")
 
-        try:
-            validate_image_file(image_file)
-            image_url = upload_image(
-                image_file,
-                folder="jefly/technologies",
-                public_id_prefix="technology",
-            )
-        except InvalidImageError as exc:
-            return Response({"image": [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
-        except CloudinaryError as exc:
-            return Response({"image": [str(exc)]}, status=status.HTTP_502_BAD_GATEWAY)
+        if image_file is not None:
+            try:
+                validate_image_file(image_file)
+                image_url = upload_image(
+                    image_file,
+                    folder="jefly/technologies",
+                    public_id_prefix="technology",
+                )
+            except InvalidImageError as exc:
+                return Response({"image": [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
+            except CloudinaryError as exc:
+                return Response({"image": [str(exc)]}, status=status.HTTP_502_BAD_GATEWAY)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

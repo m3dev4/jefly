@@ -504,6 +504,7 @@ class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = session
         fields = [
+            "id",
             "user",
             "token",
             "location",
@@ -513,7 +514,7 @@ class SessionSerializer(serializers.ModelSerializer):
             "date_last_used",
             "token_expiration",
         ]
-        read_only_fields = ["user", "is_active", "date_created", "date_last_used"]
+        read_only_fields = ["id", "user", "is_active", "date_created", "date_last_used"]
 
     def validate_token_expiration(self, value):
         """

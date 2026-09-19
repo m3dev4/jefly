@@ -11,7 +11,7 @@ class TechnologieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Technologie
         fields = ["id", "name", "imgUrl", "created_at", "updated_at"]
-        read_only_fields = ["name", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
 
     def validate_name(self, value: str) -> str:
         """Normalise le nom et refuse une valeur vide."""

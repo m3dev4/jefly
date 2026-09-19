@@ -83,14 +83,26 @@ class RealisationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
+from Service.models import Service
+from Service.serialiser import ServiceSerialiser
+from Technologie.serializers import TechnologieSerializer
+
+
 class FreelanceeSerializer(serializers.ModelSerializer):
     """Crée ou met à jour l'unique profil freelance de l'utilisateur."""
 
+    service = serializers.PrimaryKeyRelatedField(
+        queryset=Service.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    service_detail = ServiceSerialiser(source="service", read_only=True)
     technologies = serializers.PrimaryKeyRelatedField(
         many=True,
         required=False,
         queryset=Technologie.objects.all(),
     )
+    technologies_detail = TechnologieSerializer(source="technologies", many=True, read_only=True)
     experiences = ExperienceSerializer(many=True, read_only=True)
     educations = EducationSerializer(many=True, read_only=True)
     realisations = RealisationSerializer(many=True, read_only=True)
@@ -103,7 +115,10 @@ class FreelanceeSerializer(serializers.ModelSerializer):
             "description",
             "githubUrl",
             "linkedinUrl",
+            "service",
+            "service_detail",
             "technologies",
+            "technologies_detail",
             "experiences",
             "educations",
             "realisations",
@@ -112,6 +127,8 @@ class FreelanceeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "service_detail",
+            "technologies_detail",
             "experiences",
             "educations",
             "realisations",
