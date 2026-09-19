@@ -1,7 +1,16 @@
-import { LogoJefly } from '../../assets/images';
-import { NAV_LINKS } from '../../constants/utils';
+import { useNavigate } from "react-router-dom";
+import { LogoJefly } from "../../assets/images";
+import { NAV_LINKS } from "../../constants/utils";
+import { useQuery } from "@tanstack/react-query";
+import getCurrentUser from "../../utils/getUser";
 
 export default function Header() {
+  const navigate = useNavigate();
+  const { data: user } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: getCurrentUser,
+    retry: false,
+  });
   return (
     <header className="sticky top-0 z-50 bg-[#F7F7F5]/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -25,27 +34,36 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded-lg border border-black/10 px-5 py-2.5 font-sans text-sm font-medium text-[#1E1E24] transition hover:bg-black/5"
-          >
-            Se connecter
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-[#F2994A] px-5 py-2.5 font-sans text-sm font-semibold text-[#1E1E24] transition hover:bg-[#e28a3a]"
-          >
-            S'inscrire
-          </button>
-          <button
-            type="button"
-            aria-label="Changer de langue"
-            className="hidden h-8 w-8 items-center justify-center rounded-full font-sans text-sm lg:flex"
-          >
-            🌐
-          </button>
-        </div>
+        {user ? (
+          <>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(user.onboarding_completed ? "/espace" : "/onboarding")
+              }
+              className="py-2.5 px-5 rounded-lg cursor-pointer bg-[#f2994a] hover:bg-[#e0893a] text-white font-heading font-semibold text-sm shadow-xs transition-colors"
+            >
+              Mon espace
+            </button>
+          </>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="rounded-lg border border-neutral-200 px-4 py-2 font-sans text-sm font-medium text-[#1E1E24] transition-colors hover:bg-neutral-100 cursor-pointer"
+              onClick={() => navigate("/login")}
+            >
+              Se connecter
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-[#f2994a] px-4 py-2 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#e0893a] shadow-xs cursor-pointer"
+              onClick={() => navigate("/register")}
+            >
+              S'inscrire
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

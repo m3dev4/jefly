@@ -1,4 +1,5 @@
-import LogoJefly from "./logo.svg";
-import HeroJefly from "./hero.svg"
+import LogoJefly from './logo.svg';
+import HeroJefly from './hero.svg';
+import illustAuthJefly from './illustAuth.svg';
 
-export { LogoJefly, HeroJefly };
+export { LogoJefly, HeroJefly, illustAuthJefly };
